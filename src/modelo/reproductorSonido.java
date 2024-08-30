@@ -1,36 +1,60 @@
 package modelo;
+import archivosSoloLectura.datosSonidoLectura;
 
-import java.io.File;
-import javafx.util.Duration;  // Asegúrate de usar javafx.util.Duration
+import java.util.HashMap;
+import java.util.Map;
 
-import javafx.scene.media.*;
-import javafx.scene.media.MediaPlayer;
+
 
 public class reproductorSonido  extends reproductor{
-
-	private MediaPlayer mediaPlayer;
+	
+	Map<String,creadorReproductor> creadoresSonido = new HashMap<String,creadorReproductor>();
+	
+	@Override
+	public void reproducirSonido(datosSonidoLectura datosLectura)
+	{
+		synchronized(creadoresSonido) 
+		{
+			creadorReproductor creador = new creadorReproductor(datosLectura,this);
+			creadoresSonido.put(datosLectura.getNombreArchivo(), creador);		
+		}
+	}
+	
+	public void terminarReproduccion(String nombreArchivo) 
+	{
+		detenerSonido(nombreArchivo);
+		notificarReproduccionTerminada(nombreArchivo);
+	}
 
 	@Override
-    public void reproducirSonido(String archivo, String nombreArchivo, boolean loop) {
-		  // Crear una instancia de Media a partir de la ruta del archivo
-		System.out.println(archivo);
-		System.out.println("hola perrin");
-		File file = new File(archivo);
+	public void detenerSonido(String archivo)
+	{
 		
-	    Media sonido = new Media(file.toURI().toString());
-
-	    // Crear un reproductor y asignarle el archivo de media
-	    MediaPlayer mediaPlayer = new MediaPlayer(sonido);
-
-	    // Configurar el bucle si es necesario
-	   // mediaPlayer.setCycleCount(loop ? MediaPlayer.INDEFINITE : 1);
-
-	    // Reproducir el sonido
-	    mediaPlayer.play();
-    }
+		synchronized(creadoresSonido) 
+		{
+			creadorReproductor creador = creadoresSonido.get(archivo);
+			creador.pararReproduccion();
+			creadoresSonido.remove(archivo);
+		}
+	}
 
 	@Override
-	public void detenerSonido(String archivo) {
-		// TODO Auto-generated method stub	
+	public void setVolumen(String archivo,double valorVolumen) {
+		synchronized(creadoresSonido) 
+		{
+			creadorReproductor creador = creadoresSonido.get(archivo);
+			if(creador != null) 
+				creador.setVolumen(valorVolumen);
+		}
+	}
+
+	@Override
+	public void setLoop(String archivo,boolean loop) {
+		synchronized(creadoresSonido) 
+		{
+			creadorReproductor creador = creadoresSonido.get(archivo);
+			if(creador != null) 
+				creador.setLoop(loop);
+		}
 	}
 }

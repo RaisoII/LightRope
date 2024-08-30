@@ -1,5 +1,6 @@
 package vista;
 
+import archivosSoloLectura.datosSonidoLectura;
 import javafx.application.Application;
 import javafx.scene.control.Button;
 import javafx.stage.Stage;
@@ -15,7 +16,7 @@ public class botonSonido {
 	private boolean botonApretado;
 	// atributos sonidos
 	private boolean loop;
-	
+	private double volumen,fadeIn,fadeOut;
 	
 	public botonSonido(String ruta,String nombreArchivo, Button botonAsociado) 
 	{
@@ -24,11 +25,7 @@ public class botonSonido {
 		botonInterfaceAsociado = botonAsociado;
 		loop = false;
 		botonApretado = false;
-	}
-	
-	public String getRutaArchivoAudio() 
-	{
-		return rutaArchivoAudio;
+		volumen = 100;
 	}
 	
 	public String getRutaImagen() 
@@ -39,21 +36,6 @@ public class botonSonido {
 	public Button getBotonAsociado()
 	{
 		return botonInterfaceAsociado;
-	}
-	
-	public String getNombreArchivo() 
-	{
-		return nombreArchivo;
-	}
-	
-	public void setLoop(boolean loop) 
-	{
-		this.loop = loop;
-	}
-	
-	public boolean getLoop() 
-	{
-		return loop;
 	}
 	
 	public void setBotonApretado(boolean estado) 
@@ -76,8 +58,60 @@ public class botonSonido {
 		ventanaEdicion = nuevaVentana;
 	}
 	
+	// setters y getters atributos audio
+
+	public String getNombreArchivo() 
+	{
+		return nombreArchivo;
+	}
+	
+	public void setLoop(boolean loop) 
+	{
+		this.loop = loop;
+	}
+	
+	public boolean getLoop() 
+	{
+		return loop;
+	}
+	
+	public String getRutaArchivoAudio() 
+	{
+		return rutaArchivoAudio;
+	}
+	
+	public void setFadeIn(double valor) 
+	{
+		fadeIn = valor;
+	}
+	
+	public void setFadeOut(double valor) 
+	{
+		fadeOut = valor;
+	}
+	
+	public double getFadeIn() 
+	{
+		return fadeIn;
+	}
+	
+	public double getFadeOut() 
+	{
+		return fadeOut;
+	}
+	
+	public double getVolumen() 
+	{
+		return volumen;
+	}
+	
+	public void setVolumen(double volumen) 
+	{
+		this.volumen = volumen;
+	} 
+
 	 // Método para obtener una versión de solo lectura
     public datosSonidoLectura getDatosLectura() {
-        return new datosSonidoLectura(rutaArchivoAudio, nombreArchivo, loop);
+        return new datosSonidoLectura(rutaArchivoAudio, nombreArchivo,volumen,fadeIn,fadeOut, loop);
     }
 }

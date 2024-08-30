@@ -1,5 +1,6 @@
 package modelo;
 import interfacesObserver.*;
+import archivosSoloLectura.datosSonidoLectura;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +22,9 @@ public abstract class reproductor {
         }
     }
 
-    public abstract void reproducirSonido(String archivo,String nombreArchivo, boolean loop);
+    public abstract void reproducirSonido(datosSonidoLectura datos);
     public abstract void detenerSonido(String archivo);
+    public abstract void setVolumen(String archivo,double valorVolumen);
+    public abstract void setLoop(String archivo,boolean loop);
 
 }

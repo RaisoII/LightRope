@@ -3,18 +3,29 @@ package vista;
 import controlador.controlador;
 
 import javafx.stage.Stage;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 public class ventanaEdicionSonido extends Stage{
 
     private botonSonido botonAsociado;
     private controlador controlador;
-    private CheckBox checkBoxLoop;  // CheckBox para activar o desactivar loop
+    
+    // parametros sonido
+    private CheckBox checkBoxLoop;  
     private Button botonReproducir;
+    private Slider sliderVolumen;
+    private TextField textFieldFadeIn,textFieldFadeOut;
 
     public ventanaEdicionSonido(botonSonido botonAsociado, controlador controlador) {
         this.botonAsociado = botonAsociado;
@@ -24,23 +35,58 @@ public class ventanaEdicionSonido extends Stage{
 
     public void inicializarComponentes() {
         setTitle(botonAsociado.getNombreArchivo());
-
-        // Crear los componentes
-        checkBoxLoop = new CheckBox("Loop");
+        
+        //crear play
         botonReproducir = new Button("Play");
-        checkBoxLoop.setSelected(botonAsociado.getLoop());
-
-        // Configurar eventos
-        checkBoxLoop.setOnAction(e -> listenerLoop());
         agregarListenerBotonReproducir(botonAsociado.getBotonAsociado());
+        
+        // Crear loop
+        checkBoxLoop = new CheckBox("Loop");
+        checkBoxLoop.setSelected(botonAsociado.getLoop());
+        checkBoxLoop.setOnAction(e -> listenerLoop());
+        
+        // Slider de volumen
+        sliderVolumen = new Slider(0, 100, 100); // Rango de 0 a 100, valor inicial 100
+        sliderVolumen.setShowTickLabels(true);
+        sliderVolumen.setShowTickMarks(true);
+        sliderVolumen.setMajorTickUnit(20.0); // Cada 20 unidades, habrá una marca principal con etiqueta
+        sliderVolumen.setMinorTickCount(1);  // Añade 4 marcas menores entre cada marca principal
+        sliderVolumen.setBlockIncrement(5.0); // Mueve el slider en incrementos de 5 al usar el teclado o clicks en el área de desplazamiento
+        sliderVolumen.valueProperty().addListener((observable, oldValue, newValue) -> {
+            manejarCambioDeVolumenControlador(newValue.doubleValue() / 100f); 
+        });// Llama a una función para manejar el cambio constante 
+        
+        sliderVolumen.setOnMouseReleased(event -> {
+            guardarValorFinalVolumen(); //cuando se suelta la "bolita"
+        });
+        
+        // TextFields para Fade In y Fade Out
+        textFieldFadeIn = new TextField("0");
+        textFieldFadeOut = new TextField("0");
+        textFieldFadeIn.setPrefWidth(50);
+        textFieldFadeOut.setPrefWidth(50);
+        
+        Label labelFadeIn = new Label("Fade In (s):");
+        Label labelFadeOut = new Label("Fade Out (s):");
+        
+        //creacion paneles
+        HBox panelNorte = new HBox(10, botonReproducir, checkBoxLoop);
+        panelNorte.setPadding(new Insets(10));
 
-        // Crear contenedores
-        HBox panelNorte = new HBox(10);
-        panelNorte.getChildren().addAll(botonReproducir, checkBoxLoop);
+        HBox panelVolumen = new HBox(10, new Label("Volumen:"), sliderVolumen);
+        panelVolumen.setPadding(new Insets(10));
+
+        HBox panelFade = new HBox(10, labelFadeIn, textFieldFadeIn, labelFadeOut, textFieldFadeOut);
+        panelFade.setPadding(new Insets(10));
+
+        VBox panelCentro = new VBox(10, panelVolumen, panelFade);
+        panelCentro.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
         root.setTop(panelNorte);
-
+        root.setCenter(panelCentro);
+        
+        // activar ventana
         Scene scene = new Scene(root, 400, 300);
         setScene(scene);
         show();
@@ -50,10 +96,25 @@ public class ventanaEdicionSonido extends Stage{
     }
 
     private void agregarListenerBotonReproducir(Button botonOriginal) {
-        botonOriginal.setOnAction(e -> botonReproducir.fire());
+    	
+    	EventHandler<ActionEvent> handler = botonOriginal.getOnAction();
+    	 botonReproducir.setOnAction(handler);
     }
 
     private void listenerLoop() {
-        botonAsociado.setLoop(checkBoxLoop.isSelected());
+    	boolean loop = checkBoxLoop.isSelected();
+        botonAsociado.setLoop(loop);
+        controlador.setLoopReproduccion(botonAsociado.getNombreArchivo(),loop);
+    }
+    
+    private void manejarCambioDeVolumenControlador(double valor) 
+    {
+    	 controlador.setVolumenReproduccion(botonAsociado.getNombreArchivo(),valor);	
+    }
+    
+    private void guardarValorFinalVolumen() 
+    {
+    	System.out.println(sliderVolumen.getValue());
+    	botonAsociado.setVolumen(sliderVolumen.getValue() / 100f);
     }
 }

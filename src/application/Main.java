@@ -19,7 +19,7 @@ public class Main extends Application {
 		
 		vista vista = new vista();
 		controlador = new controlador(vista);
-		
+		vista.setControlador(controlador);
 		// Crear la escena con la raíz proporcionada por la vista
         Scene scene = new Scene(vista.getRoot(), 600, 400);
         

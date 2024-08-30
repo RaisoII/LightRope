@@ -2,11 +2,13 @@ package vista;
 
 import controlador.controlador;
 import interfacesObserver.interfaceVistaReproductorObserver;
+import archivosSoloLectura.datosSonidoLectura;
 
 import java.awt.Color;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+
 import java.util.HashMap;
 
 import javafx.scene.Scene;
@@ -19,6 +21,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -69,20 +72,28 @@ public class vista implements interfaceVistaReproductorObserver{
         buscadorArchivos = new FileChooser();
         // Configurar el VBox para que use el BorderPane
         
-        panelBotones = new FlowPane();  // Inicializar FlowPane
+        panelBotones = new FlowPane();
         panelBotones.setHgap(10);  // Espacio horizontal entre botones
         panelBotones.setVgap(10);  // Espacio vertical entre filas
         panelBotones.setPrefWrapLength(400);  // Ancho preferido del FlowPane antes de ajustar a la siguiente línea
-        
-        scrollBotones = new ScrollPane(panelBotones);
+        panelBotones.setStyle("-fx-background: transparent; -fx-border-color: transparent;");
+        // Inicializar ScrollPane con FlowPane
+        ScrollPane scrollBotones = new ScrollPane(panelBotones);
         scrollBotones.setFitToWidth(true);  // Ajustar el contenido al ancho del ScrollPane
-        scrollBotones.setFitToHeight(true); // Ajustar el contenido al alto del ScrollPane (opcional)
-    
-        // Configurar el tamaño del ScrollPane si es necesario
-       // scrollBotones.setMinHeight(300); // Establecer una altura mínima para el ScrollPane
-        // Agregar el ScrollPane al BorderPane
-        borderPane.setCenter(scrollBotones); 
+ 
+        // Remover bordes visibles del ScrollPane
+        //scrollBotones.setStyle("-fx-background: transparent; -fx-border-color: transparent;");
+
+        // Configurar el ScrollPane para expandirse y ocupar todo el espacio disponible
+        VBox.setVgrow(scrollBotones, Priority.ALWAYS);
+
+        // Crear BorderPane y agregar el ScrollPane al centro
+        borderPane.setCenter(scrollBotones);
+
+        // Crear el layout raíz y agregar el BorderPane
         root = new VBox(borderPane);
+        VBox.setVgrow(borderPane, Priority.ALWAYS);
+
     }
     
     //llamado desde el controlador
@@ -123,7 +134,7 @@ public class vista implements interfaceVistaReproductorObserver{
         });
     }
     
-    public void agregarControlador(controlador controlador) 
+    public void setControlador(controlador controlador) 
     {
     	this.controlador = controlador;
     }
@@ -151,14 +162,15 @@ public class vista implements interfaceVistaReproductorObserver{
 	
 	public void colorearBotonReproduccion(String nombreBoton,boolean reproduciendo) 
     {
-		Button boton = mapaBotonesSonido.get(nombreBoton).getBotonAsociado();
-	    if(reproduciendo)
+		botonSonido botonSonido = mapaBotonesSonido.get(nombreBoton);
+		Button boton = botonSonido.getBotonAsociado();
+		
+		if(reproduciendo)
     		 boton.getStyleClass().add("boton-reproduccion"); // el archivo CSS estilosBoton
     	else
     		boton.getStyleClass().remove("boton-reproduccion");
-	    
-	    boton.applyCss();
-	    boton.layout(); // Forzar a redibujar
+		
+		botonSonido.setBotonApretado(reproduciendo);
     }
 	
 	 public datosSonidoLectura getDatosSonido(String archivo) 
@@ -171,11 +183,12 @@ public class vista implements interfaceVistaReproductorObserver{
     //eventos
 
 	@Override
-	public void onReproduccionTerminada(String nombreCancion) {
-		System.out.println("llega reproduccion Terminadaaa");
-		
-	}
-	
+	 public void onReproduccionTerminada(String nombreBoton) {
+    	botonSonido boton = mapaBotonesSonido.get(nombreBoton);
+        Button botonInterface = boton.getBotonAsociado(); 
+        botonInterface.getStyleClass().remove("boton-reproduccion");
+    	boton.setBotonApretado(false);
+    }
 	
 	
     public VBox getRoot() {

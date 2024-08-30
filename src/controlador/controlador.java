@@ -1,10 +1,10 @@
 package controlador;
 import vista.vista;
-import vista.datosSonidoLectura;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import archivosSoloLectura.datosSonidoLectura;
 import modelo.reproductorSonido;
 
 
@@ -51,7 +51,7 @@ public class controlador {
        
     	boolean reproduciendo = vista.getEstadoBoton(nombreArchivo);
     	 vista.colorearBotonReproduccion(nombreArchivo,!reproduciendo);
-         
+         System.out.println(reproduciendo);
          if (reproduciendo) 
         	 reproducirSonido.detenerSonido(nombreArchivo);
          else 
@@ -63,10 +63,16 @@ public class controlador {
     
     private void ejecutarReproduccion(datosSonidoLectura datos) 
     {
-    	String nombreArchivo =datos.getNombreArchivo();
-    	String rutaArchivo = datos.getRutaArchivoAudio();
-    	boolean loop = datos.getLoop();
-    	
-    	reproducirSonido.reproducirSonido(rutaArchivo,nombreArchivo, loop);
+    	reproducirSonido.reproducirSonido(datos);
+    }
+    
+    public void setVolumenReproduccion(String nombreArchivo,double volumen) 
+    {
+    	reproducirSonido.setVolumen(nombreArchivo,volumen);
+    }
+    
+    public void setLoopReproduccion(String nombreArchivo,boolean loop) 
+    {
+    	reproducirSonido.setLoop(nombreArchivo,loop);
     }
 }
