@@ -16,7 +16,7 @@ public class botonSonido {
 	private boolean botonApretado;
 	// atributos sonidos
 	private boolean loop;
-	private double volumen,fadeIn,fadeOut;
+	private double volumen,fadeIn,fadeOut; // escala de volumen [0,1]
 	
 	public botonSonido(String ruta,String nombreArchivo, Button botonAsociado) 
 	{
@@ -25,7 +25,7 @@ public class botonSonido {
 		botonInterfaceAsociado = botonAsociado;
 		loop = false;
 		botonApretado = false;
-		volumen = 100;
+		volumen = 1;
 	}
 	
 	public String getRutaImagen() 

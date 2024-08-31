@@ -25,7 +25,6 @@ public class ventanaEdicionSonido extends Stage{
     private CheckBox checkBoxLoop;  
     private Button botonReproducir;
     private Slider sliderVolumen;
-    private TextField textFieldFadeIn,textFieldFadeOut;
 
     public ventanaEdicionSonido(botonSonido botonAsociado, controlador controlador) {
         this.botonAsociado = botonAsociado;
@@ -34,7 +33,8 @@ public class ventanaEdicionSonido extends Stage{
     }
 
     public void inicializarComponentes() {
-        setTitle(botonAsociado.getNombreArchivo());
+        
+    	setTitle(botonAsociado.getNombreArchivo());
         
         //crear play
         botonReproducir = new Button("Play");
@@ -52,6 +52,7 @@ public class ventanaEdicionSonido extends Stage{
         sliderVolumen.setMajorTickUnit(20.0); // Cada 20 unidades, habrá una marca principal con etiqueta
         sliderVolumen.setMinorTickCount(1);  // Añade 4 marcas menores entre cada marca principal
         sliderVolumen.setBlockIncrement(5.0); // Mueve el slider en incrementos de 5 al usar el teclado o clicks en el área de desplazamiento
+        sliderVolumen.setValue(botonAsociado.getVolumen() * 100);
         sliderVolumen.valueProperty().addListener((observable, oldValue, newValue) -> {
             manejarCambioDeVolumenControlador(newValue.doubleValue() / 100f); 
         });// Llama a una función para manejar el cambio constante 
@@ -60,26 +61,36 @@ public class ventanaEdicionSonido extends Stage{
             guardarValorFinalVolumen(); //cuando se suelta la "bolita"
         });
         
-        // TextFields para Fade In y Fade Out
-        textFieldFadeIn = new TextField("0");
-        textFieldFadeOut = new TextField("0");
-        textFieldFadeIn.setPrefWidth(50);
-        textFieldFadeOut.setPrefWidth(50);
+     // TextFields para Fade In y Fade Out
+        TextField textFieldFadeIn = new TextField("0");
+        TextField textFieldFadeOut = new TextField("0");
         
+        // Establecer ancho preferido para los campos
+        textFieldFadeIn.setPrefWidth(30);
+        textFieldFadeOut.setPrefWidth(30);
+        agregarListenersTextField(textFieldFadeIn,textFieldFadeOut);
+
+        // Etiquetas para los campos de Fade In y Fade Out
         Label labelFadeIn = new Label("Fade In (s):");
         Label labelFadeOut = new Label("Fade Out (s):");
-        
+      
         //creacion paneles
+        
+     // Creación de los paneles de Fade In y Fade Out
+        HBox panelFadeIn = new HBox(10, labelFadeIn, textFieldFadeIn);
+        panelFadeIn.setPadding(new Insets(10));
+
+        HBox panelFadeOut = new HBox(10, labelFadeOut, textFieldFadeOut);
+        panelFadeOut.setPadding(new Insets(10));
+
+        
         HBox panelNorte = new HBox(10, botonReproducir, checkBoxLoop);
         panelNorte.setPadding(new Insets(10));
 
         HBox panelVolumen = new HBox(10, new Label("Volumen:"), sliderVolumen);
         panelVolumen.setPadding(new Insets(10));
 
-        HBox panelFade = new HBox(10, labelFadeIn, textFieldFadeIn, labelFadeOut, textFieldFadeOut);
-        panelFade.setPadding(new Insets(10));
-
-        VBox panelCentro = new VBox(10, panelVolumen, panelFade);
+        VBox panelCentro = new VBox(10, panelVolumen, panelFadeIn,panelFadeOut);
         panelCentro.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
@@ -95,13 +106,37 @@ public class ventanaEdicionSonido extends Stage{
         setOnCloseRequest(e -> botonAsociado.setVentanaEdicion(null));
     }
 
-    private void agregarListenerBotonReproducir(Button botonOriginal) {
-    	
-    	EventHandler<ActionEvent> handler = botonOriginal.getOnAction();
+    private void agregarListenersTextField(TextField textFieldFadeIn, TextField textFieldFadeOut) {
+    	 textFieldFadeIn.textProperty().addListener((observable, oldValue, newValue) -> {
+    	        try {
+    	            int fadeInValue = Integer.parseInt(newValue);
+    	            botonAsociado.setFadeIn(fadeInValue);
+    	        } catch (NumberFormatException e) {
+    	            // Manejar el caso en que el texto no sea un número válido
+    	            System.err.println("Error: El valor de Fade In debe ser un número entero.");
+    	        }
+    	    });
+    	 
+    	  textFieldFadeOut.textProperty().addListener((observable, oldValue, newValue) -> {
+    	        try {
+    	            int fadeOutValue = Integer.parseInt(newValue);
+    	            botonAsociado.setFadeIn(fadeOutValue);
+    	        } catch (NumberFormatException e) {
+    	            // Manejar el caso en que el texto no sea un número válido
+    	            System.err.println("Error: El valor de Fade Out debe ser un número entero.");
+    	        }
+    	    });
+	}
+    
+
+	private void agregarListenerBotonReproducir(Button botonOriginal) {
+    	//l a funcionalidad del boton que hace abrir esta ventana
+    	 EventHandler<ActionEvent> handler = botonOriginal.getOnAction();
     	 botonReproducir.setOnAction(handler);
     }
-
-    private void listenerLoop() {
+    
+    private void listenerLoop() 
+    {
     	boolean loop = checkBoxLoop.isSelected();
         botonAsociado.setLoop(loop);
         controlador.setLoopReproduccion(botonAsociado.getNombreArchivo(),loop);
@@ -114,7 +149,6 @@ public class ventanaEdicionSonido extends Stage{
     
     private void guardarValorFinalVolumen() 
     {
-    	System.out.println(sliderVolumen.getValue());
     	botonAsociado.setVolumen(sliderVolumen.getValue() / 100f);
     }
 }
