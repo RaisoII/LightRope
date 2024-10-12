@@ -1,16 +1,18 @@
 package controlador;
+
 import vista.vista;
+import archivosSoloLectura.datosSonidoLectura;
+import modelo.reproductorSonido;
+import modelo.edicionSonido;
+
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import archivosSoloLectura.datosSonidoLectura;
-import modelo.reproductorSonido;
-
-
 public class controlador {
 	
 	private reproductorSonido reproducirSonido;
+	private edicionSonido edicionSonido;
 	private vista vista;
 	
 	public controlador(vista vista) 
@@ -18,6 +20,9 @@ public class controlador {
 		this.vista = vista;
 		reproducirSonido = new reproductorSonido();
 		reproducirSonido.addObserver(vista);
+		edicionSonido = new edicionSonido();
+		edicionSonido.setReproductor(reproducirSonido);
+		reproducirSonido.addObserver(edicionSonido);
 		setearListenersVista();
 	}
 	
@@ -74,5 +79,10 @@ public class controlador {
     public void setLoopReproduccion(String nombreArchivo,boolean loop) 
     {
     	reproducirSonido.setLoop(nombreArchivo,loop);
+    }
+    
+    public void entrarModoEdicion(datosSonidoLectura datos) 
+    {
+    	edicionSonido.analizarSonido(datos);
     }
 }

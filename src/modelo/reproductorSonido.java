@@ -13,11 +13,9 @@ public class reproductorSonido  extends reproductor{
 	@Override
 	public void reproducirSonido(datosSonidoLectura datosLectura)
 	{
-		synchronized(creadoresSonido) 
-		{
-			creadorReproductor creador = new creadorReproductor(datosLectura,this);
-			creadoresSonido.put(datosLectura.getNombreArchivo(), creador);		
-		}
+		
+		creadorReproductor creador = new creadorReproductor(datosLectura,this);
+		creadoresSonido.put(datosLectura.getNombreArchivo(), creador);		
 	}
 	
 	public void terminarReproduccion(String nombreArchivo) 
@@ -29,32 +27,32 @@ public class reproductorSonido  extends reproductor{
 	@Override
 	public void detenerSonido(String archivo)
 	{
-		
-		synchronized(creadoresSonido) 
-		{
-			creadorReproductor creador = creadoresSonido.get(archivo);
-			creador.pararReproduccion();
-			creadoresSonido.remove(archivo);
-		}
+		creadorReproductor creador = creadoresSonido.get(archivo);
+		creador.pararReproduccion();
+		creadoresSonido.remove(archivo);
 	}
 
 	@Override
 	public void setVolumen(String archivo,double valorVolumen) {
-		synchronized(creadoresSonido) 
-		{
-			creadorReproductor creador = creadoresSonido.get(archivo);
-			if(creador != null) 
-				creador.setVolumen(valorVolumen);
-		}
+	
+		creadorReproductor creador = creadoresSonido.get(archivo);
+		if(creador != null) 
+			creador.setVolumen(valorVolumen);
 	}
 
 	@Override
 	public void setLoop(String archivo,boolean loop) {
-		synchronized(creadoresSonido) 
-		{
-			creadorReproductor creador = creadoresSonido.get(archivo);
-			if(creador != null) 
-				creador.setLoop(loop);
-		}
+	
+		creadorReproductor creador = creadoresSonido.get(archivo);
+		if(creador != null) 
+			creador.setLoop(loop);
+	
+	}
+	
+	// para la edicion en tiempo Real
+	public creadorReproductor getCreadorSonido(String nombreArchivo) 
+	{
+		creadorReproductor creador = creadoresSonido.get(nombreArchivo);
+		return creador;
 	}
 }

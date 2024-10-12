@@ -1,7 +1,7 @@
 package vista;
 
 import controlador.controlador;
-import interfacesObserver.interfaceVistaReproductorObserver;
+import interfacesObserver.interfaceReproductorListener;
 import archivosSoloLectura.datosSonidoLectura;
 
 import java.awt.Color;
@@ -11,7 +11,6 @@ import java.util.Map;
 
 import java.util.HashMap;
 
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Menu;
@@ -23,20 +22,18 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
-import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.ContextMenu;
 import javafx.stage.Stage;
 
-public class vista implements interfaceVistaReproductorObserver{
+public class vista implements interfaceReproductorListener{
     
     private controlador controlador;
     private Map<String,botonSonido> mapaBotonesSonido;
     private botonSonido botonActualSeleccionado;
-    private Color colorDefectoBotones;
+    
     // Elementos de la interfaz
-
 	private VBox root;
     private FileChooser buscadorArchivos;
     private MenuItem openItem;
@@ -49,7 +46,6 @@ public class vista implements interfaceVistaReproductorObserver{
     
     	mapaBotonesSonido = new HashMap<String,botonSonido>();
         crearInterface();
-        Color colorDefectoBotones = Color.lightGray;
     }
     
     private void crearInterface() {
@@ -189,7 +185,6 @@ public class vista implements interfaceVistaReproductorObserver{
         botonInterface.getStyleClass().remove("boton-reproduccion");
     	boton.setBotonApretado(false);
     }
-	
 	
     public VBox getRoot() {
         return root;

@@ -50,20 +50,12 @@ public class creadorReproductor {
 	public void pararReproduccion() 
 	{
 		mediaPlayer.stop();
-		if(fadeInActivo())
-			fadeIn.pararFadeIn();
 	}
 	
 	public void setVolumen(double volumen) 
 	{
 		this.volumen = volumen;
-		
-		if(fadeInActivo()) 
-		{
-			fadeIn.setVolumenActual(volumen);
-		}
-		else
-			mediaPlayer.setVolume(volumen);	
+		mediaPlayer.setVolume(volumen);	
 	}
 	
 	public void setLoop(boolean loop) 
@@ -72,8 +64,8 @@ public class creadorReproductor {
 		mediaPlayer.setCycleCount(loop ? MediaPlayer.INDEFINITE : 1);
 	}
 	
-	private boolean fadeInActivo() 
+	public MediaPlayer getMediaPlayer() 
 	{
-		return mediaPlayer.getCurrentTime().toSeconds() < fadeInDuracion;
+		return mediaPlayer;
 	}
 }

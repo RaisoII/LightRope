@@ -29,6 +29,7 @@ public class ventanaEdicionSonido extends Stage{
     public ventanaEdicionSonido(botonSonido botonAsociado, controlador controlador) {
         this.botonAsociado = botonAsociado;
         this.controlador = controlador;
+        controlador.entrarModoEdicion(botonAsociado.getDatosLectura());
         inicializarComponentes();
     }
 

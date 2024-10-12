@@ -1,6 +1,6 @@
 package interfacesObserver;
-import javax.swing.*;
+
 
 public interface interfaceReproductorListener {
-	void onReproduccionTerminada(JButton boton);
+	void onReproduccionTerminada(String nombreCancion);
 }
