@@ -31,7 +31,9 @@ public class creadorReproductor {
 	    agregarListenerMedia();
 	    mediaPlayer.setVolume(volumen);
 	    if(fadeInDuracion > 0)
-	    	fadeIn = new FadeIn(mediaPlayer,fadeInDuracion,volumen);
+	    	fadeIn = new FadeIn(mediaPlayer,fadeInDuracion,volumen,() -> {
+	    	    fadeIn = null;
+	    	});
 	     
 	    mediaPlayer.play();
 	}
@@ -45,17 +47,31 @@ public class creadorReproductor {
 	{
 		if(!loop)
 			reproductor.terminarReproduccion(nombreArchivo);
+		else if(fadeInDuracion > 0)
+		    	fadeIn = new FadeIn(mediaPlayer,fadeInDuracion,volumen,() -> {
+		    	    fadeIn = null;
+		    	});
 	}
+	
 	
 	public void pararReproduccion() 
 	{
 		mediaPlayer.stop();
+		
+		if(fadeIn != null) 
+		{
+			fadeIn.pararFadeIn();
+			fadeIn = null;
+		}
 	}
 	
 	public void setVolumen(double volumen) 
 	{
 		this.volumen = volumen;
-		mediaPlayer.setVolume(volumen);	
+		if(fadeIn != null)
+			fadeIn.setVolumenActual(volumen);
+		else
+			mediaPlayer.setVolume(volumen);
 	}
 	
 	public void setLoop(boolean loop) 

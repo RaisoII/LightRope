@@ -108,10 +108,10 @@ public class vista implements interfaceReproductorListener{
     }
 
     // llamado desde el controlador
-    public void agregarBoton(String ruta,String nombreCancion,EventHandler<ActionEvent> handler) {
+    public void agregarBoton(String ruta,String nombreCancion,float duracion,EventHandler<ActionEvent> handler) {
         Button boton = new Button(nombreCancion);
         boton.setOnAction(handler);
-        botonSonido botonSonido = new botonSonido(ruta,nombreCancion,boton);
+        botonSonido botonSonido = new botonSonido(ruta,nombreCancion,duracion,boton);
         agregarListenerBotonDerecho(botonSonido);
         mapaBotonesSonido.put(nombreCancion, botonSonido);
         panelBotones.getChildren().add(boton);

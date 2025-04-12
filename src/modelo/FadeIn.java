@@ -9,17 +9,17 @@ public class FadeIn {
 	
 	private MediaPlayer mediaPlayer;
     private double volumen, increment, fadeInDuration, intervalo;
-    private int iteracionesPasadas;
     private Timeline fadeInTimeline;
     private double currentVolume; // Hacer currentVolume global para rastrear el progreso
-
-    public FadeIn(MediaPlayer mediaPlayer, double fadeInDuration, double volumenActual) {
+    private Runnable finish;
+    
+    public FadeIn(MediaPlayer mediaPlayer, double fadeInDuration, double volumenActual, Runnable finish) {
         this.mediaPlayer = mediaPlayer;
         this.fadeInDuration = fadeInDuration;
         this.intervalo = 0.1f; // Frecuencia en segundos
+        this.finish = finish;
         volumen = volumenActual;
         currentVolume = 0; // Inicia con volumen 0 para el fade in
-        iteracionesPasadas = 0;
         mediaPlayer.setVolume(0); // Iniciar el MediaPlayer con volumen 0
         calcularIncremento();
         iniciarFadeIn();
@@ -40,12 +40,20 @@ public class FadeIn {
         currentVolume =currentVolume + increment;
         // Incrementar o ajustar currentVolume gradualmente
         currentVolume = Math.min(currentVolume, volumen);
+        
         mediaPlayer.setVolume(currentVolume);
-        iteracionesPasadas++;
-        System.out.println("volumen actual: " + currentVolume);
+        System.out.println(currentVolume);
+        if (currentVolume >= volumen - 0.05f)
+        {
+        	mediaPlayer.setVolume(currentVolume);
+            if (fadeInTimeline != null) fadeInTimeline.stop();
+            if (finish != null) finish.run(); // ← Lo ejecutás
+        }
+        //System.out.println("volumen actual: " + currentVolume);
     }
 
     public void setVolumenActual(double volumen) {
+    	System.out.println("actualizacion volumen "+volumen);
     	this.volumen = volumen; // Actualiza el volumen objetivo    
     	calcularIncremento(); // Recalcula el incremento basado en el nuevo volumen objetivo
         ajustarFadeIn(); // Ajusta la animación en curso con el nuevo volumen   	

@@ -36,7 +36,7 @@ public class ventanaEdicionSonido extends Stage{
     public void inicializarComponentes() {
         
     	setTitle(botonAsociado.getNombreArchivo());
-        
+    	float duracionSegundos =  botonAsociado.getDuracion();
         //crear play
         botonReproducir = new Button("Play");
         agregarListenerBotonReproducir(botonAsociado.getBotonAsociado());
@@ -62,6 +62,18 @@ public class ventanaEdicionSonido extends Stage{
             guardarValorFinalVolumen(); //cuando se suelta la "bolita"
         });
         
+     // Slider de progreso de la canción
+        Slider sliderProgreso = new Slider(0, duracionSegundos, 0); // ahora el tope es la duración real
+        sliderProgreso.setShowTickLabels(true);
+        sliderProgreso.setShowTickMarks(true);
+
+        // Elegís un salto cómodo. Por ejemplo, cada 10 segundos:
+        sliderProgreso.setMajorTickUnit(1);
+        sliderProgreso.setMinorTickCount(0); // o 1 si querés mini-marcas
+        sliderProgreso.setBlockIncrement(1);
+        sliderProgreso.setPrefWidth(300);
+        sliderProgreso.setDisable(true); // hasta que se reproduzca
+        
      // TextFields para Fade In y Fade Out
         TextField textFieldFadeIn = new TextField("0");
         TextField textFieldFadeOut = new TextField("0");
@@ -74,6 +86,10 @@ public class ventanaEdicionSonido extends Stage{
         // Etiquetas para los campos de Fade In y Fade Out
         Label labelFadeIn = new Label("Fade In (s):");
         Label labelFadeOut = new Label("Fade Out (s):");
+        Label labelDuracion = new Label(formatearDuracion(duracionSegundos)); // su duración en segundos
+        
+        HBox panelProgreso = new HBox(10, sliderProgreso, labelDuracion);
+        panelProgreso.setPadding(new Insets(10));
       
         //creacion paneles
         
@@ -90,10 +106,10 @@ public class ventanaEdicionSonido extends Stage{
 
         HBox panelVolumen = new HBox(10, new Label("Volumen:"), sliderVolumen);
         panelVolumen.setPadding(new Insets(10));
+        
 
-        VBox panelCentro = new VBox(10, panelVolumen, panelFadeIn,panelFadeOut);
+        VBox panelCentro = new VBox(10, panelVolumen,panelProgreso, panelFadeIn,panelFadeOut);
         panelCentro.setPadding(new Insets(10));
-
         BorderPane root = new BorderPane();
         root.setTop(panelNorte);
         root.setCenter(panelCentro);
@@ -128,6 +144,13 @@ public class ventanaEdicionSonido extends Stage{
     	        }
     	    });
 	}
+    
+    private String formatearDuracion(float segundosTotales) {
+        int horas = (int) (segundosTotales / 3600);
+        int minutos = (int) ((segundosTotales % 3600) / 60);
+        int segundos = (int) (segundosTotales % 60);
+        return String.format("%02d:%02d:%02d", horas, minutos, segundos);
+    }
     
 
 	private void agregarListenerBotonReproducir(Button botonOriginal) {

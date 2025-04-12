@@ -38,6 +38,7 @@ public class reproductorSonido  extends reproductor{
 		creadorReproductor creador = creadoresSonido.get(archivo);
 		if(creador != null) 
 			creador.setVolumen(valorVolumen);
+		
 	}
 
 	@Override
