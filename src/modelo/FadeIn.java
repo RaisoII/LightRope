@@ -42,7 +42,7 @@ public class FadeIn {
         currentVolume = Math.min(currentVolume, volumen);
         
         mediaPlayer.setVolume(currentVolume);
-        System.out.println(currentVolume);
+        //System.out.println(currentVolume);
         if (currentVolume >= volumen - 0.05f)
         {
         	mediaPlayer.setVolume(currentVolume);
@@ -53,7 +53,6 @@ public class FadeIn {
     }
 
     public void setVolumenActual(double volumen) {
-    	System.out.println("actualizacion volumen "+volumen);
     	this.volumen = volumen; // Actualiza el volumen objetivo    
     	calcularIncremento(); // Recalcula el incremento basado en el nuevo volumen objetivo
         ajustarFadeIn(); // Ajusta la animación en curso con el nuevo volumen   	

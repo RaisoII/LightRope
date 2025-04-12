@@ -120,6 +120,7 @@ public class botonSonido {
 
 	 // Método para obtener una versión de solo lectura
     public datosSonidoLectura getDatosLectura() {
+
         return new datosSonidoLectura(rutaArchivoAudio, nombreArchivo,volumen,duracion,fadeIn,fadeOut, loop);
     }
 }

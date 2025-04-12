@@ -189,4 +189,10 @@ public class vista implements interfaceReproductorListener{
     public VBox getRoot() {
         return root;
     }
+
+	@Override
+	public void avanceReproduccion(String nombreCancion, double avance) {
+		// TODO Auto-generated method stub
+		
+	}
 }

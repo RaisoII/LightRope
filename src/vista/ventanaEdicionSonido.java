@@ -1,7 +1,7 @@
 package vista;
 
 import controlador.controlador;
-
+import interfacesObserver.interfaceReproductorListener;
 import javafx.stage.Stage;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -15,8 +15,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter; 
 
-public class ventanaEdicionSonido extends Stage{
+public class ventanaEdicionSonido extends Stage implements interfaceReproductorListener{
 
     private botonSonido botonAsociado;
     private controlador controlador;
@@ -24,29 +25,127 @@ public class ventanaEdicionSonido extends Stage{
     // parametros sonido
     private CheckBox checkBoxLoop;  
     private Button botonReproducir;
-    private Slider sliderVolumen;
+    private Slider sliderVolumen,sliderProgreso;
+    private float duracionSegundos;
+    private BorderPane root;
+    private Label labelTiempoSonido;
+    
 
     public ventanaEdicionSonido(botonSonido botonAsociado, controlador controlador) {
         this.botonAsociado = botonAsociado;
         this.controlador = controlador;
-        controlador.entrarModoEdicion(botonAsociado.getDatosLectura());
+        controlador.setObserver(this);
         inicializarComponentes();
     }
 
     public void inicializarComponentes() {
         
     	setTitle(botonAsociado.getNombreArchivo());
-    	float duracionSegundos =  botonAsociado.getDuracion();
-        //crear play
-        botonReproducir = new Button("Play");
-        agregarListenerBotonReproducir(botonAsociado.getBotonAsociado());
+    	duracionSegundos =  botonAsociado.getDuracion();
+    	
+    	crearComponentesUI();
+    	configurarLayout();  
+    	configurarEscena();
+    	configurarCierreVentana();
+     }
+    
+    private void crearComponentesUI() {
+    	crearBotonPlay();
+        crearSliderVolumen();
+        crearSliderProgreso();
+        crearBotonLoop();
+    }
+    
+    private void configurarLayout() {
+    
+    	TextField textFieldFadeIn = new TextField("0");
+    	TextField textFieldFadeOut = new TextField("0");
+        textFieldFadeIn.setPrefWidth(30);
+        textFieldFadeOut.setPrefWidth(30);
+
+        agregarListenersTextField(textFieldFadeIn, textFieldFadeOut);
+
+        Label labelFadeIn = new Label("Fade In (s):");
+        Label labelFadeOut = new Label("Fade Out (s):");
+        labelTiempoSonido = new Label("00:00:00 / "+ formatearDuracion(duracionSegundos));
+
+        HBox panelProgreso = new HBox(10, sliderProgreso, labelTiempoSonido);
+        panelProgreso.setPadding(new Insets(10));
+
+        HBox panelFadeIn = new HBox(10, labelFadeIn, textFieldFadeIn);
+        panelFadeIn.setPadding(new Insets(10));
+
+        HBox panelFadeOut = new HBox(10, labelFadeOut, textFieldFadeOut);
+        panelFadeOut.setPadding(new Insets(10));
+
+        HBox panelNorte = new HBox(10, botonReproducir, checkBoxLoop);
+        panelNorte.setPadding(new Insets(10));
+
+        HBox panelVolumen = new HBox(10, new Label("Volumen:"), sliderVolumen);
+        panelVolumen.setPadding(new Insets(10));
+
+        VBox panelCentro = new VBox(10, panelVolumen, panelProgreso, panelFadeIn, panelFadeOut);
+        panelCentro.setPadding(new Insets(10));
+
         
-        // Crear loop
-        checkBoxLoop = new CheckBox("Loop");
+        root = new BorderPane();
+        root.setTop(panelNorte);
+        root.setCenter(panelCentro);
+    }
+    
+    private void configurarEscena() {
+    	Scene scene = new Scene(root, 500, 300);
+        setScene(scene);
+        show();
+    }
+    
+    private void configurarCierreVentana() {
+    	 setOnCloseRequest(e -> botonAsociado.setVentanaEdicion(null));
+    }
+    
+    private void crearBotonPlay() {
+    	
+    	botonReproducir = new Button("Play");
+        agregarListenerBotonReproducir(botonAsociado.getBotonAsociado());
+    }
+    
+    private void crearBotonLoop() {
+    	checkBoxLoop = new CheckBox("Loop");
         checkBoxLoop.setSelected(botonAsociado.getLoop());
         checkBoxLoop.setOnAction(e -> listenerLoop());
+    }
+    
+    private void crearSliderProgreso() {
+    	// Slider de progreso de la canción
+        sliderProgreso = new Slider(0, duracionSegundos, 0); // ahora el tope es la duración real
+        sliderProgreso.setShowTickLabels(true);
+        sliderProgreso.setShowTickMarks(true);
+
+        // Elegís un salto cómodo. Por ejemplo, cada 10 segundos:
+        sliderProgreso.setMajorTickUnit(10);
+        sliderProgreso.setMinorTickCount(0); // o 1 si querés mini-marcas
+        sliderProgreso.setBlockIncrement(1);
+        sliderProgreso.setPrefWidth(300);
+        sliderProgreso.setDisable(true); // hasta que se reproduzca
         
-        // Slider de volumen
+        sliderProgreso.setLabelFormatter(new StringConverter<Double>() {
+            @Override
+            public String toString(Double valor) {
+                int totalSeconds = valor.intValue();
+                int minutos = totalSeconds / 60;
+                int segundos = totalSeconds % 60;
+                return String.format("%02d:%02d", minutos, segundos); // Formato 00:00
+            }
+
+            @Override
+            public Double fromString(String string) {
+                return 0.0; // No se necesita convertir de vuelta, solo mostramos el formato
+            }
+        });
+    }
+    
+    private void crearSliderVolumen() {
+    	 // Slider de volumen
         sliderVolumen = new Slider(0, 100, 100); // Rango de 0 a 100, valor inicial 100
         sliderVolumen.setShowTickLabels(true);
         sliderVolumen.setShowTickMarks(true);
@@ -61,67 +160,8 @@ public class ventanaEdicionSonido extends Stage{
         sliderVolumen.setOnMouseReleased(event -> {
             guardarValorFinalVolumen(); //cuando se suelta la "bolita"
         });
-        
-     // Slider de progreso de la canción
-        Slider sliderProgreso = new Slider(0, duracionSegundos, 0); // ahora el tope es la duración real
-        sliderProgreso.setShowTickLabels(true);
-        sliderProgreso.setShowTickMarks(true);
-
-        // Elegís un salto cómodo. Por ejemplo, cada 10 segundos:
-        sliderProgreso.setMajorTickUnit(1);
-        sliderProgreso.setMinorTickCount(0); // o 1 si querés mini-marcas
-        sliderProgreso.setBlockIncrement(1);
-        sliderProgreso.setPrefWidth(300);
-        sliderProgreso.setDisable(true); // hasta que se reproduzca
-        
-     // TextFields para Fade In y Fade Out
-        TextField textFieldFadeIn = new TextField("0");
-        TextField textFieldFadeOut = new TextField("0");
-        
-        // Establecer ancho preferido para los campos
-        textFieldFadeIn.setPrefWidth(30);
-        textFieldFadeOut.setPrefWidth(30);
-        agregarListenersTextField(textFieldFadeIn,textFieldFadeOut);
-
-        // Etiquetas para los campos de Fade In y Fade Out
-        Label labelFadeIn = new Label("Fade In (s):");
-        Label labelFadeOut = new Label("Fade Out (s):");
-        Label labelDuracion = new Label(formatearDuracion(duracionSegundos)); // su duración en segundos
-        
-        HBox panelProgreso = new HBox(10, sliderProgreso, labelDuracion);
-        panelProgreso.setPadding(new Insets(10));
-      
-        //creacion paneles
-        
-     // Creación de los paneles de Fade In y Fade Out
-        HBox panelFadeIn = new HBox(10, labelFadeIn, textFieldFadeIn);
-        panelFadeIn.setPadding(new Insets(10));
-
-        HBox panelFadeOut = new HBox(10, labelFadeOut, textFieldFadeOut);
-        panelFadeOut.setPadding(new Insets(10));
-
-        
-        HBox panelNorte = new HBox(10, botonReproducir, checkBoxLoop);
-        panelNorte.setPadding(new Insets(10));
-
-        HBox panelVolumen = new HBox(10, new Label("Volumen:"), sliderVolumen);
-        panelVolumen.setPadding(new Insets(10));
-        
-
-        VBox panelCentro = new VBox(10, panelVolumen,panelProgreso, panelFadeIn,panelFadeOut);
-        panelCentro.setPadding(new Insets(10));
-        BorderPane root = new BorderPane();
-        root.setTop(panelNorte);
-        root.setCenter(panelCentro);
-        
-        // activar ventana
-        Scene scene = new Scene(root, 400, 300);
-        setScene(scene);
-        show();
-
-        // Configurar el cierre de la ventana
-        setOnCloseRequest(e -> botonAsociado.setVentanaEdicion(null));
     }
+   
 
     private void agregarListenersTextField(TextField textFieldFadeIn, TextField textFieldFadeOut) {
     	 textFieldFadeIn.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -137,7 +177,7 @@ public class ventanaEdicionSonido extends Stage{
     	  textFieldFadeOut.textProperty().addListener((observable, oldValue, newValue) -> {
     	        try {
     	            int fadeOutValue = Integer.parseInt(newValue);
-    	            botonAsociado.setFadeIn(fadeOutValue);
+    	            botonAsociado.setFadeOut(fadeOutValue);
     	        } catch (NumberFormatException e) {
     	            // Manejar el caso en que el texto no sea un número válido
     	            System.err.println("Error: El valor de Fade Out debe ser un número entero.");
@@ -175,4 +215,26 @@ public class ventanaEdicionSonido extends Stage{
     {
     	botonAsociado.setVolumen(sliderVolumen.getValue() / 100f);
     }
+
+	@Override
+	public void onReproduccionTerminada(String nombreCancion) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void avanceReproduccion(String nombreCancion,double avance) {
+		
+		if(!nombreCancion.equals(botonAsociado.getNombreArchivo()))
+				return;
+		
+		sliderProgreso.setValue(avance);
+		
+		 int horas = (int) (avance / 3600);
+		 int minutos = (int) ((avance % 3600) / 60);
+		 int segundos = (int) (avance % 60);
+	    
+	    String tiempoFormateado = String.format("%02d:%02d:%02d",horas, minutos, segundos) + " / "+ formatearDuracion(duracionSegundos);
+	    labelTiempoSonido.setText(tiempoFormateado);
+	}
 }

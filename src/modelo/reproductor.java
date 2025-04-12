@@ -21,6 +21,13 @@ public abstract class reproductor {
             observer.onReproduccionTerminada(nombreCancion); 
         }
     }
+    
+    protected void notificarAvanceCancion(String nombreCancion, double avance) 
+    {
+    	for (interfaceReproductorListener observer : observers) {
+            observer.avanceReproduccion(nombreCancion,avance); 
+        }
+    }
 
     public abstract void reproducirSonido(datosSonidoLectura datos);
     
