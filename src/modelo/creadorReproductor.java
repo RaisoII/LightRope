@@ -131,6 +131,8 @@ public class creadorReproductor {
 		this.volumen = volumen;
 		if(fadeIn != null)
 			fadeIn.setVolumenActual(volumen);
+		else if(fadeOut != null)
+			fadeOut.setVolumenActual(volumen);
 		else
 			mediaPlayer.setVolume(volumen);
 	}

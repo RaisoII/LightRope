@@ -6,48 +6,71 @@ import javafx.util.Duration;
 
 public class FadeOut {
 	
-	private Timeline timeline;
-    private MediaPlayer mediaPlayer;
-    private double duracion;
-    private double volumenInicial;
-    private Runnable alFinalizar;
-    
-    public FadeOut(MediaPlayer mediaPlayer, double duracionSegundos, double volumenInicial, Runnable alFinalizar) {
-        this.mediaPlayer = mediaPlayer;
-        this.duracion = duracionSegundos;
-        this.volumenInicial = volumenInicial;
-        this.alFinalizar = alFinalizar;
+	private MediaPlayer mediaPlayer;
+    private double currentVolume;
+    private double decrement;
+    private double fadeOutDuration;
+    private double intervalo;
+    private Timeline fadeOutTimeline;
+    private Runnable finish;
 
+    public FadeOut(MediaPlayer mediaPlayer, double fadeOutDuration, double volumenInicial, Runnable finish) {
+        this.mediaPlayer = mediaPlayer;
+        this.fadeOutDuration = fadeOutDuration;
+        this.intervalo = 0.1f; // intervalo en segundos
+        this.finish = finish;
+        this.currentVolume = volumenInicial;
+        mediaPlayer.setVolume(currentVolume);
+        calcularDecremento();
         iniciarFadeOut();
     }
-    
+
     private void iniciarFadeOut() {
-        int pasos = 30; // 30 pasos suaves
-        double decremento = volumenInicial / pasos;
-        double intervalo = duracion / pasos;
-
-        timeline = new Timeline();
-
-        for (int i = 0; i <= pasos; i++) {
-            double nuevoVolumen = Math.max(0, volumenInicial - (i * decremento));
-            timeline.getKeyFrames().add(new KeyFrame(Duration.seconds(i * intervalo), e -> {
-                mediaPlayer.setVolume(nuevoVolumen);
-            }));
-        }
-
-        timeline.setOnFinished(e -> {
-            if (alFinalizar != null) {
-            	mediaPlayer.setVolume(0);
-                alFinalizar.run();
-            }
-        });
-
-        timeline.play();
+        fadeOutTimeline = new Timeline();
+        KeyFrame keyFrame = new KeyFrame(Duration.seconds(intervalo),
+                                         event -> decrementarVolumen());
+        fadeOutTimeline.getKeyFrames().add(keyFrame);
+        fadeOutTimeline.setCycleCount((int) (fadeOutDuration / intervalo));
+        fadeOutTimeline.setAutoReverse(false);
+        fadeOutTimeline.play();
     }
-    
+
+    private void decrementarVolumen() {
+        currentVolume -= decrement;
+        currentVolume = Math.max(0, currentVolume);
+
+        mediaPlayer.setVolume(currentVolume);
+
+        if (currentVolume <= 0.05f) {
+            mediaPlayer.setVolume(0);
+            if (fadeOutTimeline != null) fadeOutTimeline.stop();
+            if (finish != null) finish.run();
+        }
+    }
+
+    private void calcularDecremento() {
+        double diferencia = currentVolume; // ya que el objetivo siempre es 0
+        int steps = (int) (fadeOutDuration / intervalo);
+        this.decrement = diferencia / steps;
+    }
+
+    public void setVolumenActual(double nuevoVolumenInicial) {
+        this.currentVolume = nuevoVolumenInicial;
+        mediaPlayer.setVolume(currentVolume);
+        calcularDecremento();
+        ajustarFadeOut();
+    }
+
+    private void ajustarFadeOut() {
+        if (fadeOutTimeline != null && fadeOutTimeline.getStatus() == Timeline.Status.RUNNING) {
+            fadeOutTimeline.stop();
+        }
+        iniciarFadeOut();
+    }
+
     public void pararFadeOut() {
-        if (timeline != null) {
-            timeline.stop();
+        if (fadeOutTimeline != null) {
+            fadeOutTimeline.stop();
         }
     }
 }
