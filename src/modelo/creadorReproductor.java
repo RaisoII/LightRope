@@ -145,4 +145,9 @@ public class creadorReproductor {
 	{
 		return mediaPlayer;
 	}
+	
+	public void actualizarAudio(float segundos) 
+	{
+		mediaPlayer.seek(Duration.seconds(segundos));
+	}
 }

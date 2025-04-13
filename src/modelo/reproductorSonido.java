@@ -56,4 +56,11 @@ public class reproductorSonido  extends reproductor{
 		creadorReproductor creador = creadoresSonido.get(nombreArchivo);
 		return creador;
 	}
+
+	@Override
+	public void actualizarAudio(datosSonidoLectura datos, float segundos) {
+
+		creadorReproductor creador = creadoresSonido.get(datos.getNombreArchivo());
+		creador.actualizarAudio(segundos);
+	}
 }

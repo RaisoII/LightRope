@@ -121,6 +121,10 @@ public class controlador {
          }
      }
     
+    public void actualizarAudio(datosSonidoLectura datos, float segundos) {
+    	reproducirSonido.actualizarAudio(datos,segundos);
+    }
+    
     private void ejecutarReproduccion(datosSonidoLectura datos) 
     {
     	reproducirSonido.reproducirSonido(datos);
@@ -139,5 +143,10 @@ public class controlador {
     public void setObserver(interfaceReproductorListener objeto) 
     {
     	reproducirSonido.addObserver(objeto);
+    }
+    
+    public void deleteObserver(interfaceReproductorListener objeto) 
+    {
+    	reproducirSonido.removeObserver(objeto);
     }
 }

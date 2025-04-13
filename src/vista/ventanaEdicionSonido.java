@@ -3,24 +3,30 @@ package vista;
 import controlador.controlador;
 import interfacesObserver.interfaceReproductorListener;
 import javafx.stage.Stage;
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import javafx.util.StringConverter; 
 
 public class ventanaEdicionSonido extends Stage implements interfaceReproductorListener{
 
     private botonSonido botonAsociado;
     private controlador controlador;
+    private boolean usuarioMovioSlider,dragPermitido;
     
     // parametros sonido
     private CheckBox checkBoxLoop;  
@@ -116,6 +122,9 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     }
     
     private void crearSliderProgreso() {
+    	
+    	usuarioMovioSlider = false;
+    	dragPermitido = false;
     	// Slider de progreso de la canción
         sliderProgreso = new Slider(0, duracionSegundos, 0); // ahora el tope es la duración real
         sliderProgreso.setShowTickLabels(true);
@@ -125,9 +134,47 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
         sliderProgreso.setMajorTickUnit(10);
         sliderProgreso.setMinorTickCount(0); // o 1 si querés mini-marcas
         sliderProgreso.setBlockIncrement(1);
-        sliderProgreso.setPrefWidth(300);
-        sliderProgreso.setDisable(true); // hasta que se reproduzca
+        sliderProgreso.setPrefWidth(350);
+        sliderProgreso.setDisable(!botonAsociado.getBotonApretado()); // hasta que se reproduzca
         
+        sliderProgreso.setOnMousePressed(e -> {
+            
+            controlador.deleteObserver(this);
+
+            double y = e.getY();
+            double height = sliderProgreso.getHeight();
+
+            // Solo permitimos drag si el clic fue dentro de la zona de la barra
+            dragPermitido = y > 4 && y < height - 26;
+        });
+       
+        sliderProgreso.setOnMouseReleased(e -> {
+        	
+        	System.out.println(dragPermitido + " , "+usuarioMovioSlider);
+            if (dragPermitido || usuarioMovioSlider) {
+            	actualizarAudio();
+            }
+            
+            usuarioMovioSlider = false;
+        });
+        
+     // Este bloque detecta si el usuario hace clic sobre la bolita (thumb) directamente
+        Platform.runLater(() -> {
+            Node thumb = sliderProgreso.lookup(".thumb");
+                thumb.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+                    usuarioMovioSlider = true;
+                    dragPermitido = true;
+                    //System.out.println("🎯 Clic directo sobre la bolita (lookup)");
+                });
+        });
+        
+        
+        sliderProgreso.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (dragPermitido && !oldVal.equals(newVal)) {
+                usuarioMovioSlider = true;
+            }
+        });
+       
         sliderProgreso.setLabelFormatter(new StringConverter<Double>() {
             @Override
             public String toString(Double valor) {
@@ -136,11 +183,11 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
                 int segundos = totalSeconds % 60;
                 return String.format("%02d:%02d", minutos, segundos); // Formato 00:00
             }
-
-            @Override
-            public Double fromString(String string) {
-                return 0.0; // No se necesita convertir de vuelta, solo mostramos el formato
-            }
+            
+	        @Override
+	        public Double fromString(String string) {
+	            return 0.0; // No se necesita convertir de vuelta, solo mostramos el formato
+	        }
         });
     }
     
@@ -186,7 +233,8 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	}
     
     private String formatearDuracion(float segundosTotales) {
-        int horas = (int) (segundosTotales / 3600);
+    
+    	int horas = (int) (segundosTotales / 3600);
         int minutos = (int) ((segundosTotales % 3600) / 60);
         int segundos = (int) (segundosTotales % 60);
         return String.format("%02d:%02d:%02d", horas, minutos, segundos);
@@ -230,11 +278,26 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 		
 		sliderProgreso.setValue(avance);
 		
-		 int horas = (int) (avance / 3600);
-		 int minutos = (int) ((avance % 3600) / 60);
-		 int segundos = (int) (avance % 60);
-	    
+		int horas = (int) (avance / 3600);
+		int minutos = (int) ((avance % 3600) / 60);
+		int segundos = (int) (avance % 60);
+		 
 	    String tiempoFormateado = String.format("%02d:%02d:%02d",horas, minutos, segundos) + " / "+ formatearDuracion(duracionSegundos);
 	    labelTiempoSonido.setText(tiempoFormateado);
+	}
+	
+	public void setEnabledSliderProgreso(boolean estaReproduciendo) 
+	{
+		sliderProgreso.setDisable(!estaReproduciendo);
+	}
+	
+	public void actualizarAudio() 
+	{
+		float segundos = (float) sliderProgreso.getValue();
+		controlador.actualizarAudio(botonAsociado.getDatosLectura(), segundos);
+		controlador.setObserver(this);
+		//PauseTransition delay = new PauseTransition(Duration.millis(100f));
+	    //delay.setOnFinished(e -> controlador.setObserver(this));
+	    //delay.play();
 	}
 }

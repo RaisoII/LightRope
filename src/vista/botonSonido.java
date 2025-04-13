@@ -28,7 +28,6 @@ public class botonSonido {
 		loop = false;
 		botonApretado = false;
 		volumen = 1;
-		System.out.print(duracion);
 	}
 	
 	public String getRutaImagen() 
@@ -44,6 +43,12 @@ public class botonSonido {
 	public void setBotonApretado(boolean estado) 
 	{
 		botonApretado = estado;
+		
+		if(ventanaEdicion != null) 
+		{
+			ventanaEdicionSonido ventana = (ventanaEdicionSonido)ventanaEdicion;
+			ventana.setEnabledSliderProgreso(estado);
+		}
 	}
 	
 	public boolean getBotonApretado() 

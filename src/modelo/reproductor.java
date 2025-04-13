@@ -9,7 +9,9 @@ public abstract class reproductor {
 	private List<interfaceReproductorListener> observers = new ArrayList<>();
 	
     public void addObserver(interfaceReproductorListener observer) {
-        observers.add(observer);
+    	// esto pasa porque la ventanaEdicion puede suscribirse muchas veces si se clickea rapido
+    	if(!observers.contains(observer))
+    		observers.add(observer);
     }
 
     public void removeObserver(interfaceReproductorListener observer) {
@@ -25,7 +27,7 @@ public abstract class reproductor {
     protected void notificarAvanceCancion(String nombreCancion, double avance) 
     {
     	for (interfaceReproductorListener observer : observers) {
-            observer.avanceReproduccion(nombreCancion,avance); 
+    		observer.avanceReproduccion(nombreCancion,avance); 
         }
     }
 
@@ -36,5 +38,7 @@ public abstract class reproductor {
     public abstract void setVolumen(String archivo,double valorVolumen);
     
     public abstract void setLoop(String archivo,boolean loop);
+    
+    public abstract void actualizarAudio(datosSonidoLectura datos,float segundos);
 
 }
