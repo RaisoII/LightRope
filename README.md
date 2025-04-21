@@ -18,3 +18,9 @@ la libertad de crear su propia atmósfera en el momento.
 # Estado del proyecto
 
 Este proyecto se encuentra en desarrollo. Acepta archivos .mp3 y WAV con ideas de extenderlos a .ogg
+
+# Descargar
+
+Si solo querés usar la aplicación sin compilar el código, podés descargar una versión lista para ejecutar desde la sección de Releases del repositorio.
+
+Descargá el archivo .rar, descomprimilo y seguí las instrucciones del archivo README.txt incluido para ejecutar el programa.
