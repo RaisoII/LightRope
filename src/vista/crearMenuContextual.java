@@ -1,9 +1,7 @@
 package vista;
 
-import vista.vista;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
-import javafx.stage.Stage;
 
 public class crearMenuContextual {
 	
@@ -28,11 +26,11 @@ public class crearMenuContextual {
 	        return menu;
 	    }
 
-	    private static void abrirVentanaEditarSonido() {
+	    /*private static void abrirVentanaEditarSonido() {
 	        // Lógica para abrir la ventana de edición de sonido
 	        Stage ventanaEdicion = new Stage();
 	        ventanaEdicion.setTitle("Edit Sound");
 	        ventanaEdicion.show();
-	    }
+	    }*/
 	}
 

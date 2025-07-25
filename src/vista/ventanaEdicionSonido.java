@@ -3,7 +3,6 @@ package vista;
 import controlador.controlador;
 import interfacesObserver.interfaceReproductorListener;
 import javafx.stage.Stage;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -19,7 +18,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
 import javafx.util.StringConverter; 
 
 public class ventanaEdicionSonido extends Stage implements interfaceReproductorListener{

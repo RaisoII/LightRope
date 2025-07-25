@@ -1,5 +1,6 @@
 package modelo;
 import java.io.File;
+import java.util.concurrent.atomic.AtomicReference;
 
 import archivosSoloLectura.datosSonidoLectura;
 import javafx.scene.media.*;
@@ -13,18 +14,16 @@ public class creadorReproductor {
 	String nombreArchivo;
 	double volumen,fadeInDuracion,fadeOutDuracion;
 	boolean loop;
-	private FadeIn fadeIn;
-	private FadeOut fadeOut;
-	private boolean fadeOutIniciado;
+	private AudioFader fader;
 	
 	public creadorReproductor(datosSonidoLectura datosLectura,reproductorSonido reproductor) 
 	{
 		setearVariables(datosLectura);
 		crearMediaPlayer(datosLectura.getRutaArchivoAudio(),reproductor);
+		crearAudioFader();
 	}
 	
 	private void setearVariables(datosSonidoLectura datosLectura) {
-		fadeOutIniciado = false;
 		nombreArchivo = datosLectura.getNombreArchivo();
 		loop = datosLectura.getLoop();
 		volumen = datosLectura.getVolumen(); // la escala es de 0 a 1
@@ -41,14 +40,18 @@ public class creadorReproductor {
 	    //mediaPlayer.setCycleCount(loop ? MediaPlayer.INDEFINITE : 1);
 	    agregarListenerMedia();
 	    mediaPlayer.setVolume(volumen);
-	    
-	    if(fadeInDuracion > 0)
-	    	fadeIn = new FadeIn(mediaPlayer,fadeInDuracion,volumen,() -> {
-	    	    fadeIn = null;
-	    	});
 	     
 	    mediaPlayer.play();
 	}
+	
+	private void crearAudioFader() {
+		
+		fader = new AudioFader(mediaPlayer,volumen,
+				fadeInDuracion,
+				fadeOutDuracion
+		);
+	}
+
 	
 	private void agregarListenerMedia() 
 	{
@@ -59,35 +62,10 @@ public class creadorReproductor {
 	private void checkAvance(Duration newTime) 
 	{
 		checkBarraAvance(newTime);
-		checkFadeOut(newTime);
-		
 	}
 	
 	private void checkBarraAvance(Duration newTime) {
 		reproductor.notificarAvanceCancion(nombreArchivo, newTime.toSeconds());
-	}
-	
-	private void checkFadeOut(Duration newTime) {
-		
-		if(fadeOutDuracion > 0 && !fadeOutIniciado) 
-		{
-			Duration total = mediaPlayer.getTotalDuration();
-            Duration restante = total.subtract(newTime);
-     
-            if (restante.toSeconds() <= fadeOutDuracion) {
-            	
-            	if(fadeIn != null) 
-            	{
-            		fadeIn.pararFadeIn();
-            		fadeIn = null;
-            	}
-            	
-            	fadeOutIniciado = true;
-                fadeOut = new FadeOut(mediaPlayer, fadeOutDuracion, mediaPlayer.getVolume(), () -> {
-                    fadeOut = null;
-                });
-            }
-		}
 	}
 	
 	private void avisarFinReproduccion() 
@@ -96,51 +74,27 @@ public class creadorReproductor {
 			reproductor.terminarReproduccion(nombreArchivo);
 		else 
 		{
-			fadeOutIniciado = false;
 			mediaPlayer.seek(Duration.ZERO);
 	        mediaPlayer.play();
-	       
-			if(fadeInDuracion > 0)
-		    	fadeIn = new FadeIn(mediaPlayer,fadeInDuracion,volumen,() -> {
-		    	fadeIn = null;
-		    });
-		} 
+	    } 
 	}
-	
 	
 	public void pararReproduccion() 
 	{
 		mediaPlayer.stop();
 		
-		if(fadeIn != null) 
-		{
-			fadeIn.pararFadeIn();
-			fadeIn = null;
-		}
-		
-		if (fadeOut != null) {
-	        fadeOut.pararFadeOut();
-	        fadeOut = null;
-	    }
-
-	    fadeOutIniciado = false;
 	}
 	
 	public void setVolumen(double volumen) 
 	{
 		this.volumen = volumen;
-		if(fadeIn != null)
-			fadeIn.setVolumenActual(volumen);
-		else if(fadeOut != null)
-			fadeOut.setVolumenActual(volumen);
-		else
-			mediaPlayer.setVolume(volumen);
+		fader.setVolumenTarget(volumen);
+		//mediaPlayer.setVolume(volumen);
 	}
 	
 	public void setLoop(boolean loop) 
 	{
 		this.loop = loop;
-		mediaPlayer.setCycleCount(loop ? MediaPlayer.INDEFINITE : 1);
 	}
 	
 	public MediaPlayer getMediaPlayer() 
@@ -151,5 +105,6 @@ public class creadorReproductor {
 	public void actualizarAudio(float segundos) 
 	{
 		mediaPlayer.seek(Duration.seconds(segundos));
+		fader.onSeek();
 	}
 }

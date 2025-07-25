@@ -4,7 +4,6 @@ import controlador.controlador;
 import interfacesObserver.interfaceReproductorListener;
 import archivosSoloLectura.datosSonidoLectura;
 
-import java.awt.Color;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
