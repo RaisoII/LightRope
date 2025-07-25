@@ -148,7 +148,7 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
        
         sliderProgreso.setOnMouseReleased(e -> {
         	
-        	System.out.println(dragPermitido + " , "+usuarioMovioSlider);
+        	//System.out.println(dragPermitido + " , "+usuarioMovioSlider);
             if (dragPermitido || usuarioMovioSlider) {
             	actualizarAudio();
             }

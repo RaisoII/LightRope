@@ -10,13 +10,17 @@ public class AudioFader {
 
     private final MediaPlayer mediaPlayer;
     private Timeline currentFadeTimeline;
-    private double volumenTarget; // Este es el volumen al que siempre queremos llegar si no hay fades especiales
-    private double fadeInDuracion; // En segundos
-    private double fadeOutDuracion; // En segundos
+    private double volumenTarget; 
+    private double fadeInDuracion; // [s]
+    private double fadeOutDuracion; // [s]
 
-    // Variables de estado del fade actual
-    private double currentFadeStartTimeVolume; // Volumen desde el que se inició el fade actual
-    private double currentFadeTargetVolume;    // Volumen objetivo del fade actual
+    // Variables de estado del fadeIn actual
+    private double currentFadeStartTimeVolume;
+    private double currentFadeTargetVolume;
+    
+    //variable de estado del FadeOut
+    private PauseTransition fadeOutFinalDelay;
+
 
     public AudioFader(MediaPlayer mediaPlayer, double volumenTarget, double fadeInDuracion, double fadeOutDuracion) {
         this.mediaPlayer = mediaPlayer;
@@ -45,6 +49,55 @@ public class AudioFader {
                 mediaPlayer.play();
             }
         });
+        
+        mediaPlayer.setOnReady(() -> {
+            programarFadeOutFinal();
+        });
+    }
+    
+    private void programarFadeOutFinal() {
+        
+    	if (fadeOutFinalDelay != null)
+    	{
+            fadeOutFinalDelay.stop();
+            fadeOutFinalDelay = null;
+        }
+
+        if (fadeOutDuracion <= 0) return;
+
+        Duration total = mediaPlayer.getTotalDuration();
+        Duration actual = mediaPlayer.getCurrentTime();
+
+        double remainingMillis = total.toMillis() - actual.toMillis() - (fadeOutDuracion * 1000);
+
+        if (remainingMillis <= 0)
+        {
+        	double tiempoRestante = total.toMillis() - actual.toMillis();
+            currentFadeStartTimeVolume = volumenTarget * (tiempoRestante / (fadeOutDuracion * 1000));
+            currentFadeStartTimeVolume = Math.max(0, Math.min(currentFadeStartTimeVolume, volumenTarget)); // Clamp
+
+            mediaPlayer.setVolume(currentFadeStartTimeVolume);
+
+            System.out.println("[FadeOut] Ya estamos dentro del fade-out. Ejecutando desde ahora hasta el final.");
+            crearFadeOut(0); 
+            return;
+        }
+        
+        crearFadeOut(remainingMillis);
+    }
+
+    private void crearFadeOut(double remainingMillis) 
+    {
+    	fadeOutFinalDelay = new PauseTransition(Duration.millis(remainingMillis));
+        fadeOutFinalDelay.setOnFinished(e -> {
+            if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+                System.out.println("[FadeOut] Ejecutando fade-out final (tras seek)");
+                currentFadeStartTimeVolume = mediaPlayer.getVolume();
+                startSmoothFade(fadeOutDuracion * 1000, 0);
+            }
+        });
+        
+        fadeOutFinalDelay.play();
     }
 
     private void startSmoothFade(double durationMillis, double targetVolume) {
@@ -83,12 +136,13 @@ public class AudioFader {
     }
 
     // Este es el método que creadorReproductor llama cuando el volumen cambia
-    public void setVolumenTarget(double newVolumen) {
+    public void setVolumenTarget(double newVolumen)
+    {
        
     	this.volumenTarget = newVolumen; // Actualizar el volumen objetivo final
     	
     	boolean dentroDelFadeIn = mediaPlayer.getCurrentTime().toSeconds() < fadeInDuracion;
-
+    	// LOGICA PARA EL FADEIN
     	if (dentroDelFadeIn)
         {
     		double remainingDurationMillis;
@@ -117,8 +171,57 @@ public class AudioFader {
         		mediaPlayer.setVolume(0);
         	}
         }
-        else
-        	mediaPlayer.setVolume(newVolumen);
+    	else // NO ESTOY EN EL FADEIN
+    	{
+    	    double tiempoActual = mediaPlayer.getCurrentTime().toSeconds();
+    	    double tiempoRestante = mediaPlayer.getTotalDuration().toSeconds() - tiempoActual;
+
+    	    boolean dentroDelFadeOut = tiempoRestante < fadeOutDuracion;
+    	  
+    	    // LOGICA PARA EL FADEOUT
+    	    if (dentroDelFadeOut)
+    	    {
+    	    	
+    	    	if (fadeOutFinalDelay != null)
+	       	 	{
+	       		 	fadeOutFinalDelay.stop();
+	       		 	fadeOutFinalDelay = null;	
+	       	 	}
+
+    	    	mediaPlayer.setVolume(newVolumen);
+    	    	
+    	        // Si el volumen nuevo es mayor a 0, hacemos un fade desde el volumen actual
+    	        if (newVolumen > 0) 
+    	        {
+    	        	 Duration total = mediaPlayer.getTotalDuration();
+    	        	    Duration actual = mediaPlayer.getCurrentTime();
+
+    	        	    double tiempoTotalFadeOutMillis = fadeOutDuracion * 1000;
+    	        	    double tiempoRestanteMillis = total.toMillis() - actual.toMillis();
+    	        	    double tiempoYaConsumido = tiempoTotalFadeOutMillis - tiempoRestanteMillis;
+
+    	        	    // Clamp entre 0 y 1
+    	        	    double progreso = Math.max(0, Math.min(1, tiempoYaConsumido / tiempoTotalFadeOutMillis));
+
+    	        	    // Calcular el volumen actual simulado del fade desde newVolumen
+    	        	    double volumenInterpolado = newVolumen * (1 - progreso);
+    	        	    mediaPlayer.setVolume(volumenInterpolado);
+    	        	    currentFadeStartTimeVolume = volumenInterpolado;
+
+    	        	    crearFadeOut(tiempoRestanteMillis);
+    	        }
+    	        else 
+    	        {
+    	        	stopFading();
+    	        	mediaPlayer.setVolume(0);
+    	        }   	        	
+    	        
+    	        return;
+    	    }
+
+    	    // FUERA DEL FADEIN y OUT
+    	    mediaPlayer.setVolume(newVolumen);
+    	}
     }
 
     // Se llama cuando el creadorReproductor hace un seek
@@ -126,27 +229,45 @@ public class AudioFader {
     {
     	if(currentFadeTimeline != null) 
     	{
-    		System.out.println("esta verga está activa");
     		currentFadeTimeline.stop();
     		currentFadeTimeline = null;
     	}
+    	
+    	 if (fadeOutFinalDelay != null)
+    	 {
+    		 fadeOutFinalDelay.stop();
+    	     fadeOutFinalDelay = null;
+    	 }
 		
 			
-    	PauseTransition delay = new PauseTransition(Duration.millis(30)); // el delay mínimo que funcione bien
+    	PauseTransition delay = new PauseTransition(Duration.millis(100)); // el delay mínimo que funcione bien
     	
     	delay.setOnFinished(e -> {
             double tiempoActual = mediaPlayer.getCurrentTime().toSeconds();
             
             boolean dentroDelFadeIn = tiempoActual < fadeInDuracion;
-            if (dentroDelFadeIn) {
+            if (dentroDelFadeIn)
+            {
                 // volumen que debería tener si el fade hubiera sido continuo
                 currentFadeStartTimeVolume = volumenTarget * (tiempoActual / fadeInDuracion);
                 double remainingDurationMillis = 1000 * (fadeInDuracion - tiempoActual);
                 
                 startSmoothFade(Math.max(300, remainingDurationMillis), volumenTarget);
             }
-            else
-            	mediaPlayer.setVolume(volumenTarget);
+            else  
+            {
+            	double tiempoRestante = mediaPlayer.getTotalDuration().toSeconds() - tiempoActual;
+                boolean dentroDelFadeOut = tiempoRestante < fadeOutDuracion;
+
+                if (dentroDelFadeOut)
+                {
+                    currentFadeStartTimeVolume = volumenTarget * (tiempoRestante / fadeOutDuracion);
+                    mediaPlayer.setVolume(currentFadeStartTimeVolume);
+                } else
+                    mediaPlayer.setVolume(volumenTarget);
+                
+                programarFadeOutFinal();
+            }
         });
     	
         delay.play();
