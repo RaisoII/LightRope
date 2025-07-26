@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class reproductorSonido  extends reproductor{
 	
-	Map<String,creadorReproductor> creadoresSonido = new HashMap<String,creadorReproductor>();
+	Map<Integer,creadorReproductor> creadoresSonido = new HashMap<Integer,creadorReproductor>();
 	
 	@Override
 	public void reproducirSonido(datosSonidoLectura datosLectura)
@@ -16,37 +16,37 @@ public class reproductorSonido  extends reproductor{
 
 		System.out.println("activar: "+ datosLectura.getNombreArchivo());
 		creadorReproductor creador = new creadorReproductor(datosLectura,this);
-		creadoresSonido.put(datosLectura.getNombreArchivo(), creador);		
+		creadoresSonido.put(datosLectura.getIdBoton(), creador);		
 	}
 	
-	public void terminarReproduccion(String nombreArchivo) 
+	public void terminarReproduccion(int idBoton) 
 	{
-		detenerSonido(nombreArchivo);
-		notificarReproduccionTerminada(nombreArchivo);
+		detenerSonido(idBoton);
+		notificarReproduccionTerminada(idBoton);
 	}
 
 	@Override
-	public void detenerSonido(String archivo)
+	public void detenerSonido(int idBoton)
 	{
-		System.out.println("detener: "+archivo);
-		creadorReproductor creador = creadoresSonido.get(archivo);
+		System.out.println("detener: "+idBoton);
+		creadorReproductor creador = creadoresSonido.get(idBoton);
 		creador.pararReproduccion();
-		creadoresSonido.remove(archivo);
+		creadoresSonido.remove(idBoton);
 	}
 
 	@Override
-	public void setVolumen(String archivo,double valorVolumen) {
+	public void setVolumen(int idBoton,double valorVolumen) {
 	
-		creadorReproductor creador = creadoresSonido.get(archivo);
+		creadorReproductor creador = creadoresSonido.get(idBoton);
 		if(creador != null) 
 			creador.setVolumen(valorVolumen);
 		
 	}
 
 	@Override
-	public void setLoop(String archivo,boolean loop) {
+	public void setLoop(int idBoton,boolean loop) {
 	
-		creadorReproductor creador = creadoresSonido.get(archivo);
+		creadorReproductor creador = creadoresSonido.get(idBoton);
 		if(creador != null) 
 			creador.setLoop(loop);
 	

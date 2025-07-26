@@ -29,7 +29,7 @@ import javafx.stage.Stage;
 public class vista implements interfaceReproductorListener{
     
     private controlador controlador;
-    private Map<String,botonSonido> mapaBotonesSonido;
+    private Map<Integer,botonSonido> mapaBotonesSonido;
     private botonSonido botonActualSeleccionado;
     
     // Elementos de la interfaz
@@ -43,7 +43,7 @@ public class vista implements interfaceReproductorListener{
     
     public vista() {
     
-    	mapaBotonesSonido = new HashMap<String,botonSonido>();
+    	mapaBotonesSonido = new HashMap<Integer,botonSonido>();
         crearInterface();
     }
     
@@ -142,13 +142,13 @@ public class vista implements interfaceReproductorListener{
     }
 
     // llamado desde el controlador
-    public void agregarBoton(String ruta,String nombreCancion,double duracion,EventHandler<ActionEvent> handler) {
+    public void agregarBoton(String ruta,String nombreCancion,int idBoton,double duracion,EventHandler<ActionEvent> handler) {
     	saveItem.setDisable(false);
     	Button boton = new Button(nombreCancion);
         boton.setOnAction(handler);
-        botonSonido botonSonido = new botonSonido(ruta,nombreCancion,duracion,boton);
+        botonSonido botonSonido = new botonSonido(ruta,nombreCancion,idBoton,duracion,boton);
         agregarListenerBotonDerecho(botonSonido);
-        mapaBotonesSonido.put(nombreCancion, botonSonido);
+        mapaBotonesSonido.put(idBoton, botonSonido);
         panelBotones.getChildren().add(boton);
     }
     
@@ -170,9 +170,10 @@ public class vista implements interfaceReproductorListener{
     	this.controlador = controlador;
     }
 
-    public boolean getEstadoBoton(String nombreBoton) 
+    public boolean getEstadoBoton(int idBoton) 
     {
-    	botonSonido boton = mapaBotonesSonido.get(nombreBoton);
+    	System.out.print("id: "+idBoton);
+    	botonSonido boton = mapaBotonesSonido.get(idBoton);
     	return boton.getBotonApretado();
     }
 	
@@ -191,9 +192,9 @@ public class vista implements interfaceReproductorListener{
         }
     }
 	
-	public void colorearBotonReproduccion(String nombreBoton,boolean reproduciendo) 
+	public void colorearBotonReproduccion(int idBoton,boolean reproduciendo) 
     {
-		botonSonido botonSonido = mapaBotonesSonido.get(nombreBoton);
+		botonSonido botonSonido = mapaBotonesSonido.get(idBoton);
 		Button boton = botonSonido.getBotonAsociado();
 		
 		if(reproduciendo)
@@ -204,9 +205,9 @@ public class vista implements interfaceReproductorListener{
 		botonSonido.setBotonApretado(reproduciendo);
     }
 	
-	 public datosSonidoLectura getDatosSonido(String archivo) 
+	 public datosSonidoLectura getDatosSonido(int idBoton) 
 	 {
-    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	botonSonido boton =  mapaBotonesSonido.get(idBoton);
     	return boton.getDatosLectura();
 	 }
 	 
@@ -225,8 +226,8 @@ public class vista implements interfaceReproductorListener{
     //eventos
 
 	@Override
-	 public void onReproduccionTerminada(String nombreBoton) {
-    	botonSonido boton = mapaBotonesSonido.get(nombreBoton);
+	 public void onReproduccionTerminada(int idBoton) {
+    	botonSonido boton = mapaBotonesSonido.get(idBoton);
         Button botonInterface = boton.getBotonAsociado(); 
         botonInterface.getStyleClass().remove("boton-reproduccion");
     	boton.setBotonApretado(false);
@@ -242,32 +243,32 @@ public class vista implements interfaceReproductorListener{
     }
     
     // seters para cargar datos
-    public void setVolumen(String archivo,double volumen) 
+    public void setVolumen(int idBoton,double volumen) 
     {
-    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	botonSonido boton =  mapaBotonesSonido.get(idBoton);
     	boton.setVolumen(volumen);
     }
     
-    public void setFadeIn(String archivo,double fadeIn) 
+    public void setFadeIn(int idBoton,double fadeIn) 
     {
-    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	botonSonido boton =  mapaBotonesSonido.get(idBoton);
     	boton.setFadeIn(fadeIn);
     }
     
-    public void setFadeOut(String archivo,double fadeOut) 
+    public void setFadeOut(int idBoton,double fadeOut) 
     {
-    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	botonSonido boton =  mapaBotonesSonido.get(idBoton);
     	boton.setFadeOut(fadeOut);
     }
     
-    public void setLoop(String archivo,boolean loop) 
+    public void setLoop(int idBoton,boolean loop) 
     {
-    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	botonSonido boton =  mapaBotonesSonido.get(idBoton);
     	boton.setLoop(loop);
     }
 
 	@Override
-	public void avanceReproduccion(String nombreCancion, double avance) {
+	public void avanceReproduccion(int idBoton, double avance) {
 		// TODO Auto-generated method stub
 		
 	}

@@ -2,6 +2,6 @@ package interfacesObserver;
 
 
 public interface interfaceReproductorListener {
-	void onReproduccionTerminada(String nombreCancion);
-	void avanceReproduccion(String nombreCancion,double avance);
+	void onReproduccionTerminada(int idBoton);
+	void avanceReproduccion(int idBoton,double avance);
 }

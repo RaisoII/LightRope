@@ -11,7 +11,7 @@ public class creadorReproductor {
 	
 	MediaPlayer mediaPlayer;
 	reproductorSonido reproductor;
-	String nombreArchivo;
+	int idBoton;
 	double volumen,fadeInDuracion,fadeOutDuracion;
 	boolean loop;
 	private AudioFader fader;
@@ -24,7 +24,7 @@ public class creadorReproductor {
 	}
 	
 	private void setearVariables(datosSonidoLectura datosLectura) {
-		nombreArchivo = datosLectura.getNombreArchivo();
+		idBoton = datosLectura.getIdBoton();
 		loop = datosLectura.getLoop();
 		volumen = datosLectura.getVolumen(); // la escala es de 0 a 1
 		fadeInDuracion = datosLectura.getFadeIn();
@@ -65,14 +65,14 @@ public class creadorReproductor {
 	}
 	
 	private void checkBarraAvance(Duration newTime) {
-		reproductor.notificarAvanceCancion(nombreArchivo, newTime.toSeconds());
+		reproductor.notificarAvanceCancion(idBoton, newTime.toSeconds());
 	}
 	
 	private void avisarFinReproduccion() 
 	{
 		if(!loop) 
 		{
-			reproductor.terminarReproduccion(nombreArchivo);
+			reproductor.terminarReproduccion(idBoton);
 		}
 		else 
 		{

@@ -107,7 +107,8 @@ public class XMLManager {
                 float fadeIn = Float.parseFloat(elemSonido.getElementsByTagName("fadeIn").item(0).getTextContent());
                 float fadeOut = Float.parseFloat(elemSonido.getElementsByTagName("fadeOut").item(0).getTextContent());
           
-                datosSonidoLectura datos = new datosSonidoLectura(rutaArchivo,nombre,volumen,duracion,fadeIn,fadeOut,loop);
+                datosSonidoLectura datos = new datosSonidoLectura(rutaArchivo,nombre,i,
+                													volumen,duracion,fadeIn,fadeOut,loop);
                 datosCargados.add(datos);
             }
 

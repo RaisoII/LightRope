@@ -23,9 +23,11 @@ public class controlador {
 	
 	private reproductorSonido reproducirSonido;
 	private vista vista;
+	private int idBoton;
 	
 	public controlador(vista vista) 
 	{
+		idBoton = 0;
 		this.vista = vista;
 		reproducirSonido = new reproductorSonido();
 		setObserver(vista);
@@ -60,6 +62,7 @@ public class controlador {
 		    String ruta = vista.seleccionarArchivoXML(); // este método está en vista
 		    if (ruta != null) 
 		    {
+		    	idBoton = 0;
 				vista.borrarTodosLosBotones();
 		    	crearBotonesCarga(ruta);
 		    	config.setUltimaRutaXML(ruta);
@@ -83,17 +86,23 @@ public class controlador {
 	{
 		List<datosSonidoLectura> datosCargados = XMLManager.loadXML(ruta);
         for (datosSonidoLectura datos : datosCargados) {
-            vista.agregarBoton(
+        	
+        	final int idBotonEstatico = idBoton;
+            
+        	vista.agregarBoton(
                 datos.getRutaArchivoAudio(),
                 datos.getNombreArchivo(),
+                idBotonEstatico,
                 datos.getDuracion(),
-                event -> manejarReproduccion(datos.getRutaArchivoAudio(),datos.getNombreArchivo())
+                event -> manejarReproduccion(datos.getRutaArchivoAudio(),idBotonEstatico)
             );
             
-            vista.setVolumen(datos.getNombreArchivo(), datos.getVolumen());
-            vista.setFadeIn(datos.getNombreArchivo(), datos.getFadeIn());
-            vista.setFadeOut(datos.getNombreArchivo(), datos.getFadeOut());
-            vista.setLoop(datos.getNombreArchivo(), datos.getLoop());
+            vista.setVolumen(idBotonEstatico, datos.getVolumen());
+            vista.setFadeIn(idBotonEstatico, datos.getFadeIn());
+            vista.setFadeOut(idBotonEstatico, datos.getFadeOut());
+            vista.setLoop(idBotonEstatico, datos.getLoop());
+            
+            idBoton++;
         }
 	}
 	
@@ -115,16 +124,18 @@ public class controlador {
 		String extension = buscarExtension(ruta);
 		String nombreCancion = extraerNombreCancion(ruta);
 		float duracion;
-		
+		final int idBotonEstatico = idBoton;
 		if (extension.equals("mp3")) {
 	        duracionMP3(ruta, duracionFinal -> {
-	            vista.agregarBoton(ruta, nombreCancion, duracionFinal.floatValue(), e -> manejarReproduccion(ruta, nombreCancion));
+	            vista.agregarBoton(ruta, nombreCancion,idBotonEstatico, duracionFinal.floatValue(), e -> manejarReproduccion(ruta, idBotonEstatico));
 	        });
 	    }
 		else {
 	         duracion = duracionWAV(ruta);
-	        vista.agregarBoton(ruta, nombreCancion, duracion, e -> manejarReproduccion(ruta, nombreCancion));
+	        vista.agregarBoton(ruta, nombreCancion,idBotonEstatico, duracion, e -> manejarReproduccion(ruta, idBotonEstatico));
 	    }
+		
+		idBoton++;
 	}
 	
 	private void duracionMP3(String ruta, Consumer<Double> callback) {
@@ -172,16 +183,16 @@ public class controlador {
 		    }
 		}
 
-    private void manejarReproduccion(String rutaArchivo, String nombreArchivo) {
+    private void manejarReproduccion(String rutaArchivo, int idBoton) {
        
-    	boolean reproduciendo = vista.getEstadoBoton(nombreArchivo);
-    	 vista.colorearBotonReproduccion(nombreArchivo,!reproduciendo);
+    	boolean reproduciendo = vista.getEstadoBoton(idBoton);
+    	 vista.colorearBotonReproduccion(idBoton,!reproduciendo);
     
     	 if (reproduciendo) 
-        	 reproducirSonido.detenerSonido(nombreArchivo);
+        	 reproducirSonido.detenerSonido(idBoton);
          else 
          {
-         	datosSonidoLectura datos = vista.getDatosSonido(nombreArchivo);
+         	datosSonidoLectura datos = vista.getDatosSonido(idBoton);
          	ejecutarReproduccion(datos);
          }
      }
@@ -195,14 +206,14 @@ public class controlador {
     	reproducirSonido.reproducirSonido(datos);
     }
     
-    public void setVolumenReproduccion(String nombreArchivo,double volumen) 
+    public void setVolumenReproduccion(int idBoton,double volumen) 
     {
-    	reproducirSonido.setVolumen(nombreArchivo,volumen);
+    	reproducirSonido.setVolumen(idBoton,volumen);
     }
     
-    public void setLoopReproduccion(String nombreArchivo,boolean loop) 
+    public void setLoopReproduccion(int idBoton,boolean loop) 
     {
-    	reproducirSonido.setLoop(nombreArchivo,loop);
+    	reproducirSonido.setLoop(idBoton,loop);
     }
     
     public void setObserver(interfaceReproductorListener objeto) 

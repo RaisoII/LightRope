@@ -18,26 +18,26 @@ public abstract class reproductor {
         observers.remove(observer);
     }
 
-    protected void notificarReproduccionTerminada(String nombreCancion) {
+    protected void notificarReproduccionTerminada(int idBoton) {
         for (interfaceReproductorListener observer : observers) {
-            observer.onReproduccionTerminada(nombreCancion); 
+            observer.onReproduccionTerminada(idBoton); 
         }
     }
     
-    protected void notificarAvanceCancion(String nombreCancion, double avance) 
+    protected void notificarAvanceCancion(int idBoton, double avance) 
     {
     	for (interfaceReproductorListener observer : observers) {
-    		observer.avanceReproduccion(nombreCancion,avance); 
+    		observer.avanceReproduccion(idBoton,avance); 
         }
     }
 
     public abstract void reproducirSonido(datosSonidoLectura datos);
     
-    public abstract void detenerSonido(String archivo);
+    public abstract void detenerSonido(int idBoton);
     
-    public abstract void setVolumen(String archivo,double valorVolumen);
+    public abstract void setVolumen(int idBoton,double valorVolumen);
     
-    public abstract void setLoop(String archivo,boolean loop);
+    public abstract void setLoop(int idBoton,boolean loop);
     
     public abstract void actualizarAudio(datosSonidoLectura datos,float segundos);
 

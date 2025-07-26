@@ -68,8 +68,6 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     private void configurarLayout() {
     
     	DecimalFormat df = new DecimalFormat("0.##",DecimalFormatSymbols.getInstance(Locale.US));
-    	System.out.println(botonAsociado.getFadeIn());
-    	System.out.println(botonAsociado.getFadeOut());
     	TextField textFieldFadeIn = new TextField(df.format(botonAsociado.getFadeIn()));
     	TextField textFieldFadeOut = new TextField(df.format(botonAsociado.getFadeOut()));
     	textFieldFadeIn.setPrefWidth(40);
@@ -109,9 +107,10 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     }
     
     private void configurarEscena() {
-    	Scene scene = new Scene(root, 500, 300);
+    	Scene scene = new Scene(root, 500, 400);
         setScene(scene);
         show();
+        Platform.runLater(() -> textFieldNombreArchivo.getParent().requestFocus());
     }
     
     private void configurarCierreVentana() {
@@ -280,12 +279,12 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     {
     	boolean loop = checkBoxLoop.isSelected();
         botonAsociado.setLoop(loop);
-        controlador.setLoopReproduccion(botonAsociado.getNombreArchivo(),loop);
+        controlador.setLoopReproduccion(botonAsociado.getIdBoton(),loop);
     }
     
     private void manejarCambioDeVolumenControlador(double valor) 
     {
-    	 controlador.setVolumenReproduccion(botonAsociado.getNombreArchivo(),valor);	
+    	 controlador.setVolumenReproduccion(botonAsociado.getIdBoton(),valor);	
     }
     
     private void guardarValorFinalVolumen() 
@@ -294,15 +293,15 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     }
 
 	@Override
-	public void onReproduccionTerminada(String nombreCancion) {
+	public void onReproduccionTerminada(int idBoton) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void avanceReproduccion(String nombreCancion,double avance) {
+	public void avanceReproduccion(int idBoton,double avance) {
 		
-		if(!nombreCancion.equals(botonAsociado.getNombreArchivo()))
+		if(idBoton != botonAsociado.getIdBoton())
 				return;
 		
 		sliderProgreso.setValue(avance);

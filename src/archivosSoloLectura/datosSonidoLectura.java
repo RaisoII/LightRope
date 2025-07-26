@@ -6,8 +6,9 @@ public class datosSonidoLectura {
 	private String nombreArchivo;
 	private boolean loop;
 	private double volumen,fadeIn,fadeOut,duracion;
+	private int idBoton;
 
-	public datosSonidoLectura(String rutaArchivoAudio, String nombreArchivo,double volumen,
+	public datosSonidoLectura(String rutaArchivoAudio, String nombreArchivo,int idBoton, double volumen,
 			double duracion, double fadeIn,double fadeOut,boolean loop)
 	{
 		this.duracion = duracion;
@@ -17,6 +18,7 @@ public class datosSonidoLectura {
 	    this.fadeIn = fadeIn;
 	    this.fadeOut = fadeOut;
 	    this.loop = loop;
+	    this.idBoton = idBoton;
 	}
 
 	public String getRutaArchivoAudio()
@@ -52,5 +54,10 @@ public class datosSonidoLectura {
 	public double getDuracion() 
 	{
 		return duracion;
+	}
+	
+	public int getIdBoton() 
+	{
+		return idBoton;
 	}
 }
