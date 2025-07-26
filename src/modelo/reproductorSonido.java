@@ -13,7 +13,8 @@ public class reproductorSonido  extends reproductor{
 	@Override
 	public void reproducirSonido(datosSonidoLectura datosLectura)
 	{
-		
+
+		System.out.println("activar: "+ datosLectura.getNombreArchivo());
 		creadorReproductor creador = new creadorReproductor(datosLectura,this);
 		creadoresSonido.put(datosLectura.getNombreArchivo(), creador);		
 	}
@@ -27,6 +28,7 @@ public class reproductorSonido  extends reproductor{
 	@Override
 	public void detenerSonido(String archivo)
 	{
+		System.out.println("detener: "+archivo);
 		creadorReproductor creador = creadoresSonido.get(archivo);
 		creador.pararReproduccion();
 		creadoresSonido.remove(archivo);

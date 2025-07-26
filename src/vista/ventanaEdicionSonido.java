@@ -1,5 +1,9 @@
 package vista;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
+
 import controlador.controlador;
 import interfacesObserver.interfaceReproductorListener;
 import javafx.stage.Stage;
@@ -30,10 +34,10 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     private CheckBox checkBoxLoop;  
     private Button botonReproducir;
     private Slider sliderVolumen,sliderProgreso;
-    private float duracionSegundos;
+    private double duracionSegundos;
     private BorderPane root;
     private Label labelTiempoSonido;
-    
+    private TextField textFieldNombreArchivo;
 
     public ventanaEdicionSonido(botonSonido botonAsociado, controlador controlador) {
         this.botonAsociado = botonAsociado;
@@ -58,14 +62,18 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
         crearSliderVolumen();
         crearSliderProgreso();
         crearBotonLoop();
+        crearCampoNombreEditable();
     }
     
     private void configurarLayout() {
     
-    	TextField textFieldFadeIn = new TextField("0");
-    	TextField textFieldFadeOut = new TextField("0");
-        textFieldFadeIn.setPrefWidth(30);
-        textFieldFadeOut.setPrefWidth(30);
+    	DecimalFormat df = new DecimalFormat("0.##",DecimalFormatSymbols.getInstance(Locale.US));
+    	System.out.println(botonAsociado.getFadeIn());
+    	System.out.println(botonAsociado.getFadeOut());
+    	TextField textFieldFadeIn = new TextField(df.format(botonAsociado.getFadeIn()));
+    	TextField textFieldFadeOut = new TextField(df.format(botonAsociado.getFadeOut()));
+    	textFieldFadeIn.setPrefWidth(40);
+        textFieldFadeOut.setPrefWidth(40);
 
         agregarListenersTextField(textFieldFadeIn, textFieldFadeOut);
 
@@ -93,7 +101,10 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 
         
         root = new BorderPane();
-        root.setTop(panelNorte);
+        
+        VBox panelSuperior = new VBox(10, textFieldNombreArchivo, panelNorte);
+        panelSuperior.setPadding(new Insets(10));
+        root.setTop(panelSuperior);
         root.setCenter(panelCentro);
     }
     
@@ -104,7 +115,15 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     }
     
     private void configurarCierreVentana() {
-    	 setOnCloseRequest(e -> botonAsociado.setVentanaEdicion(null));
+    	 setOnCloseRequest(e ->{ 
+    		 // Actualizar nombre si fue editado
+    	        String nuevoNombre = textFieldNombreArchivo.getText().trim();
+    	        if (!nuevoNombre.isEmpty()) {
+    	            botonAsociado.setNombreArchivo(nuevoNombre);
+    	            botonAsociado.getBotonAsociado().setText(nuevoNombre); // actualiza el texto del botón
+    	        }
+    		 botonAsociado.setVentanaEdicion(null);
+    	 });
     }
     
     private void crearBotonPlay() {
@@ -211,8 +230,8 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     private void agregarListenersTextField(TextField textFieldFadeIn, TextField textFieldFadeOut) {
     	 textFieldFadeIn.textProperty().addListener((observable, oldValue, newValue) -> {
     	        try {
-    	            int fadeInValue = Integer.parseInt(newValue);
-    	            botonAsociado.setFadeIn(fadeInValue);
+    	             double fadeInValue = Double.parseDouble(newValue);
+    	             botonAsociado.setFadeIn(fadeInValue);
     	        } catch (NumberFormatException e) {
     	            // Manejar el caso en que el texto no sea un número válido
     	            System.err.println("Error: El valor de Fade In debe ser un número entero.");
@@ -221,8 +240,8 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     	 
     	  textFieldFadeOut.textProperty().addListener((observable, oldValue, newValue) -> {
     	        try {
-    	            int fadeOutValue = Integer.parseInt(newValue);
-    	            botonAsociado.setFadeOut(fadeOutValue);
+    	             double fadeOutValue = Double.parseDouble(newValue);
+    	             botonAsociado.setFadeOut(fadeOutValue);
     	        } catch (NumberFormatException e) {
     	            // Manejar el caso en que el texto no sea un número válido
     	            System.err.println("Error: El valor de Fade Out debe ser un número entero.");
@@ -230,8 +249,20 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     	    });
 	}
     
-    private String formatearDuracion(float segundosTotales) {
+    private void crearCampoNombreEditable() {
+        textFieldNombreArchivo = new TextField(botonAsociado.getNombreArchivo());
+        textFieldNombreArchivo.setPrefWidth(300);
+        textFieldNombreArchivo.setOnAction(e -> {
+            String nuevoNombre = textFieldNombreArchivo.getText().trim();
+            if (!nuevoNombre.isEmpty()) {
+                botonAsociado.setNombreArchivo(nuevoNombre);
+                setTitle(nuevoNombre); // también actualiza el título de la ventana
+            }
+        });
+    }
     
+    private String formatearDuracion(double segundosTotales) {
+    	
     	int horas = (int) (segundosTotales / 3600);
         int minutos = (int) ((segundosTotales % 3600) / 60);
         int segundos = (int) (segundosTotales % 60);
@@ -275,7 +306,6 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 				return;
 		
 		sliderProgreso.setValue(avance);
-		
 		int horas = (int) (avance / 3600);
 		int minutos = (int) ((avance % 3600) / 60);
 		int segundos = (int) (avance % 60);

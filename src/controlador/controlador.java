@@ -3,7 +3,11 @@ package controlador;
 import vista.vista;
 import archivosSoloLectura.datosSonidoLectura;
 import interfacesObserver.interfaceReproductorListener;
+import modelo.ConfigManager;
+import modelo.XMLManager;
 import modelo.reproductorSonido;
+
+import java.util.List;
 import java.util.function.Consumer;
 
 import java.nio.file.Path;
@@ -26,6 +30,9 @@ public class controlador {
 		reproducirSonido = new reproductorSonido();
 		setObserver(vista);
 		setearListenersVista();
+		setearListenerSave();
+		setearListenerLoad();
+		cargarArchivosUltimaRuta();
 	}
 	
 	private void setearListenersVista() 
@@ -33,6 +40,64 @@ public class controlador {
         // Listener para el ítem "Open"
         vista.agregarListenerMenuItemOpen(e -> seleccionarArchivos());
 	}
+	
+	private void setearListenerSave() 
+	{
+		vista.agregarListenerMenuItemSave(e -> {
+		    String ruta = vista.seleccionarRutaGuardado();
+		    if (ruta != null) 
+		    {
+		    	XMLManager.saveXML(vista.getDatosSonidos(), ruta);
+		    }
+		});
+	}
+	
+	private void setearListenerLoad() 
+	{
+		ConfigManager config = new ConfigManager();
+		
+		vista.agregarListenerMenuItemLoad(e -> {
+		    String ruta = vista.seleccionarArchivoXML(); // este método está en vista
+		    if (ruta != null) 
+		    {
+				vista.borrarTodosLosBotones();
+		    	crearBotonesCarga(ruta);
+		    	config.setUltimaRutaXML(ruta);
+		    }
+		});
+	}
+	
+	private void cargarArchivosUltimaRuta() 
+	{
+		ConfigManager config = new ConfigManager();
+		String ruta = config.getUltimaRutaXML();
+
+		if (ruta != null && new File(ruta).exists())
+		{
+			vista.borrarTodosLosBotones();
+			crearBotonesCarga(ruta);
+		}
+	}
+	
+	private void crearBotonesCarga(String ruta) 
+	{
+		List<datosSonidoLectura> datosCargados = XMLManager.loadXML(ruta);
+        for (datosSonidoLectura datos : datosCargados) {
+            vista.agregarBoton(
+                datos.getRutaArchivoAudio(),
+                datos.getNombreArchivo(),
+                datos.getDuracion(),
+                event -> manejarReproduccion(datos.getRutaArchivoAudio(),datos.getNombreArchivo())
+            );
+            
+            vista.setVolumen(datos.getNombreArchivo(), datos.getVolumen());
+            vista.setFadeIn(datos.getNombreArchivo(), datos.getFadeIn());
+            vista.setFadeOut(datos.getNombreArchivo(), datos.getFadeOut());
+            vista.setLoop(datos.getNombreArchivo(), datos.getLoop());
+        }
+	}
+	
+	
 	
 	private void seleccionarArchivos() {
         // Usar el método en la vista para seleccionar archivos

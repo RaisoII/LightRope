@@ -70,13 +70,16 @@ public class creadorReproductor {
 	
 	private void avisarFinReproduccion() 
 	{
-		if(!loop)
+		if(!loop) 
+		{
 			reproductor.terminarReproduccion(nombreArchivo);
+		}
 		else 
 		{
 			mediaPlayer.seek(Duration.ZERO);
-	        mediaPlayer.play();
-	    } 
+			fader.iniciarFader();
+			fader.onSeek();
+		} 
 	}
 	
 	public void pararReproduccion() 
@@ -89,7 +92,6 @@ public class creadorReproductor {
 	{
 		this.volumen = volumen;
 		fader.setVolumenTarget(volumen);
-		//mediaPlayer.setVolume(volumen);
 	}
 	
 	public void setLoop(boolean loop) 

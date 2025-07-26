@@ -7,7 +7,7 @@ import archivosSoloLectura.datosSonidoLectura;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javafx.scene.control.Button;
@@ -35,7 +35,7 @@ public class vista implements interfaceReproductorListener{
     // Elementos de la interfaz
 	private VBox root;
     private FileChooser buscadorArchivos;
-    private MenuItem openItem;
+    private MenuItem openItem,saveItem,loadItem;
     private FlowPane panelBotones;
     ScrollPane scrollBotones;
     
@@ -53,9 +53,13 @@ public class vista implements interfaceReproductorListener{
 
         // Crear los elementos del menú
         openItem = new MenuItem("Open");
+        saveItem = new MenuItem("Save");
+        loadItem = new MenuItem("Load");
+        
+        saveItem.setDisable(true);
 
         // Agregar los elementos al menú "File"
-        fileMenu.getItems().add(openItem);
+        fileMenu.getItems().addAll(openItem,saveItem,loadItem);
 
         // Agregar el menú "File" a la barra de menú
         menuBar.getMenus().add(fileMenu);
@@ -91,9 +95,40 @@ public class vista implements interfaceReproductorListener{
 
     }
     
-    //llamado desde el controlador
-    public void agregarListenerMenuItemOpen(EventHandler<ActionEvent> handler) {
+    //llamados desde el controlador
+    public void agregarListenerMenuItemOpen(EventHandler<ActionEvent> handler)
+    {
         openItem.setOnAction(handler);
+    }
+    
+    public void agregarListenerMenuItemSave(EventHandler<ActionEvent> handler) 
+    {
+    	saveItem.setOnAction(handler);
+    }
+    
+    public void agregarListenerMenuItemLoad(EventHandler<ActionEvent> handler) 
+    {
+    	loadItem.setOnAction(handler);
+    }
+    
+    public String seleccionarArchivoXML() {
+	    FileChooser fileChooser = new FileChooser();
+	    fileChooser.setTitle("Seleccionar archivo XML");
+	    fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos XML", "*.xml"));
+	    File archivo = fileChooser.showOpenDialog(null);
+	    return (archivo != null) ? archivo.getAbsolutePath() : null;
+	}
+    
+    public String seleccionarRutaGuardado() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Guardar como archivo XML");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivo XML", "*.xml"));
+        File archivo = fileChooser.showSaveDialog(null);
+        
+        if (archivo != null) {
+            return archivo.getAbsolutePath();
+        }
+        return null;
     }
 
     // llamado desde el controlador
@@ -107,8 +142,9 @@ public class vista implements interfaceReproductorListener{
     }
 
     // llamado desde el controlador
-    public void agregarBoton(String ruta,String nombreCancion,float duracion,EventHandler<ActionEvent> handler) {
-        Button boton = new Button(nombreCancion);
+    public void agregarBoton(String ruta,String nombreCancion,double duracion,EventHandler<ActionEvent> handler) {
+    	saveItem.setDisable(false);
+    	Button boton = new Button(nombreCancion);
         boton.setOnAction(handler);
         botonSonido botonSonido = new botonSonido(ruta,nombreCancion,duracion,boton);
         agregarListenerBotonDerecho(botonSonido);
@@ -173,6 +209,17 @@ public class vista implements interfaceReproductorListener{
     	botonSonido boton =  mapaBotonesSonido.get(archivo);
     	return boton.getDatosLectura();
 	 }
+	 
+	 public List<datosSonidoLectura> getDatosSonidos()
+	 {
+		 List<datosSonidoLectura> datosGuardar = new ArrayList<>();
+		 for(botonSonido boton : mapaBotonesSonido.values())
+		 {
+			datosGuardar.add(boton.getDatosLectura()); 
+		 }
+		 
+		 return datosGuardar;
+	 }
 	
     // listener que está escuchando al modelo para no estar preguntandole constantemente por 
     //eventos
@@ -187,6 +234,36 @@ public class vista implements interfaceReproductorListener{
 	
     public VBox getRoot() {
         return root;
+    }
+    
+    public void borrarTodosLosBotones() {
+        mapaBotonesSonido.clear();
+        panelBotones.getChildren().clear(); // limpia todos los nodos visibles
+    }
+    
+    // seters para cargar datos
+    public void setVolumen(String archivo,double volumen) 
+    {
+    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	boton.setVolumen(volumen);
+    }
+    
+    public void setFadeIn(String archivo,double fadeIn) 
+    {
+    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	boton.setFadeIn(fadeIn);
+    }
+    
+    public void setFadeOut(String archivo,double fadeOut) 
+    {
+    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	boton.setFadeOut(fadeOut);
+    }
+    
+    public void setLoop(String archivo,boolean loop) 
+    {
+    	botonSonido boton =  mapaBotonesSonido.get(archivo);
+    	boton.setLoop(loop);
     }
 
 	@Override

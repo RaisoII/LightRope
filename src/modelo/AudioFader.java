@@ -27,29 +27,18 @@ public class AudioFader {
         this.volumenTarget = volumenTarget;
         this.fadeInDuracion = fadeInDuracion;
         this.fadeOutDuracion = fadeOutDuracion;
-
-        if (this.fadeInDuracion > 0) {
+        iniciarFader();
+    }
+    
+    public void iniciarFader() 
+    {
+    	if (this.fadeInDuracion > 0) {
             this.mediaPlayer.setVolume(0);
-            startSmoothFade(this.fadeInDuracion * 1000, this.volumenTarget); // true indica que es un fade-in
+            startSmoothFade(this.fadeInDuracion * 1000, volumenTarget); // true indica que es un fade-in
         }
         else
-            this.mediaPlayer.setVolume(this.volumenTarget);
-
-        // Asegurarse de que el fade-in se reinicie en cada loop
-        mediaPlayer.setOnEndOfMedia(() -> {
-            if (mediaPlayer.getCycleCount() == MediaPlayer.INDEFINITE) { // Solo si está en modo loop
-                mediaPlayer.seek(Duration.ZERO);
-                // Reiniciar el fade-in si corresponde
-                if (this.fadeInDuracion > 0) {
-                    this.mediaPlayer.setVolume(0);
-                    startSmoothFade(this.fadeInDuracion * 1000, this.volumenTarget);
-                } else {
-                    this.mediaPlayer.setVolume(this.volumenTarget);
-                }
-                mediaPlayer.play();
-            }
-        });
-        
+            this.mediaPlayer.setVolume(volumenTarget);
+    
         mediaPlayer.setOnReady(() -> {
             programarFadeOutFinal();
         });
@@ -69,7 +58,7 @@ public class AudioFader {
         Duration actual = mediaPlayer.getCurrentTime();
 
         double remainingMillis = total.toMillis() - actual.toMillis() - (fadeOutDuracion * 1000);
-
+        
         if (remainingMillis <= 0)
         {
         	double tiempoRestante = total.toMillis() - actual.toMillis();

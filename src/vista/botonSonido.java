@@ -10,7 +10,7 @@ public class botonSonido {
 	private String nombreArchivo;
 	private String rutaImagen;
 	private Button botonInterfaceAsociado;
-	private float duracion;
+	private double duracion;
 	private Stage ventanaEdicion;  // Ventana asociada al botón
 	
 	private boolean botonApretado;
@@ -18,7 +18,7 @@ public class botonSonido {
 	private boolean loop;
 	private double volumen,fadeIn,fadeOut; // escala de volumen [0,1]
 	
-	public botonSonido(String ruta,String nombreArchivo, float duracion, Button botonAsociado) 
+	public botonSonido(String ruta,String nombreArchivo, double duracion, Button botonAsociado) 
 	{
 		this.duracion = duracion; 
 		this.nombreArchivo = nombreArchivo;
@@ -67,6 +67,12 @@ public class botonSonido {
 	
 	// setters y getters atributos audio
 
+
+	public void setNombreArchivo(String nombreArchivo) 
+	{
+		this.nombreArchivo = nombreArchivo;
+	}
+	
 	public String getNombreArchivo() 
 	{
 		return nombreArchivo;
@@ -117,10 +123,11 @@ public class botonSonido {
 		this.volumen = volumen;
 	} 
 	
-	public float getDuracion() 
+	public double getDuracion() 
 	{
 		return duracion;
 	}
+	
 
 	 // Método para obtener una versión de solo lectura
     public datosSonidoLectura getDatosLectura() {
