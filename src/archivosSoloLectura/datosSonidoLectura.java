@@ -3,6 +3,7 @@ package archivosSoloLectura;
 public class datosSonidoLectura {
  	
 	private String rutaArchivoAudio;
+	private String rutaImagen;
 	private String nombreArchivo;
 	private boolean loop;
 	private double volumen,fadeIn,fadeOut,duracion;
@@ -29,6 +30,16 @@ public class datosSonidoLectura {
 	public String getNombreArchivo()
 	{
 		return nombreArchivo;
+	}
+	
+	public void setRutaImagen(String rutaImagen) 
+	{
+		this.rutaImagen = rutaImagen;
+	}
+	
+	public String getRutaImagen() 
+	{
+		return rutaImagen;
 	}
 
 	public boolean getLoop()

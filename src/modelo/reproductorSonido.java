@@ -53,16 +53,16 @@ public class reproductorSonido  extends reproductor{
 	}
 	
 	// para la edicion en tiempo Real
-	public creadorReproductor getCreadorSonido(String nombreArchivo) 
+	public creadorReproductor getCreadorSonido(int idBoton) 
 	{
-		creadorReproductor creador = creadoresSonido.get(nombreArchivo);
+		creadorReproductor creador = creadoresSonido.get(idBoton);
 		return creador;
 	}
 
 	@Override
 	public void actualizarAudio(datosSonidoLectura datos, float segundos) {
 
-		creadorReproductor creador = creadoresSonido.get(datos.getNombreArchivo());
+		creadorReproductor creador = creadoresSonido.get(datos.getIdBoton());
 		creador.actualizarAudio(segundos);
 	}
 }

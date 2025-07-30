@@ -5,32 +5,29 @@ import javafx.scene.control.MenuItem;
 
 public class crearMenuContextual {
 	
-	  public static  ContextMenu menuContextual(vista vista) {
+	  public static  ContextMenu menuContextual(vista vista,int idBoton) {
 	        
 		  ContextMenu menu = new ContextMenu();
 
 	        // Crear ítem de menú "Edit"
-	        MenuItem item1 = new MenuItem("Edit");
-	        item1.setOnAction(e -> vista.abrirVentanaEditarSonido());
+	        MenuItem itemEdit = new MenuItem("Edit");
+	        MenuItem itemPicture = new MenuItem("Load Picture");
+	        MenuItem itemDelete = new MenuItem("Delete");
+	        
+	        itemEdit.setOnAction(e -> vista.abrirVentanaEditarSonido());
 
-	        // Crear ítem de menú "Delete"
-	        MenuItem item2 = new MenuItem("Delete");
-	        item2.setOnAction(e -> {
-	            // Acción para "Delete"
-	            System.out.println("será prontamente eliminada...");
+	        itemDelete.setOnAction(e -> {
+	            vista.borrarBoton(idBoton);
 	        });
-
+	        
+	        itemPicture.setOnAction(e ->
+	        {
+	        	vista.seleccionarImagenParaBoton(idBoton);
+	        });
 	        // Agregar los ítems al menú contextual
-	        menu.getItems().addAll(item1, item2);
+	        menu.getItems().addAll(itemEdit,itemPicture,itemDelete);
 
 	        return menu;
 	    }
-
-	    /*private static void abrirVentanaEditarSonido() {
-	        // Lógica para abrir la ventana de edición de sonido
-	        Stage ventanaEdicion = new Stage();
-	        ventanaEdicion.setTitle("Edit Sound");
-	        ventanaEdicion.show();
-	    }*/
 	}
 

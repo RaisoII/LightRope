@@ -5,26 +5,22 @@ import interfacesObserver.interfaceReproductorListener;
 import archivosSoloLectura.datosSonidoLectura;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import javafx.scene.control.Button;
-import javafx.scene.layout.VBox;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.Priority;
-import javafx.stage.FileChooser;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.scene.control.ContextMenu;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 public class vista implements interfaceReproductorListener{
     
@@ -36,7 +32,7 @@ public class vista implements interfaceReproductorListener{
 	private VBox root;
     private FileChooser buscadorArchivos;
     private MenuItem openItem,saveItem,loadItem;
-    private FlowPane panelBotones;
+    private TilePane  panelBotones;
     ScrollPane scrollBotones;
     
     private MenuBar menuBar = new MenuBar();
@@ -70,19 +66,17 @@ public class vista implements interfaceReproductorListener{
         
         buscadorArchivos = new FileChooser();
         // Configurar el VBox para que use el BorderPane
-        
-        panelBotones = new FlowPane();
-        panelBotones.setHgap(10);  // Espacio horizontal entre botones
-        panelBotones.setVgap(10);  // Espacio vertical entre filas
-        panelBotones.setPrefWrapLength(400);  // Ancho preferido del FlowPane antes de ajustar a la siguiente línea
+        panelBotones = new TilePane();
+        panelBotones.setHgap(10);
+        panelBotones.setVgap(10);
+        panelBotones.setPrefColumns(5); // o el número de columnas que quieras
+        panelBotones.setAlignment(Pos.TOP_LEFT);
+        panelBotones.setPadding(new Insets(10, 10, 10, 10));
         panelBotones.setStyle("-fx-background: transparent; -fx-border-color: transparent;");
         // Inicializar ScrollPane con FlowPane
         ScrollPane scrollBotones = new ScrollPane(panelBotones);
         scrollBotones.setFitToWidth(true);  // Ajustar el contenido al ancho del ScrollPane
  
-        // Remover bordes visibles del ScrollPane
-        //scrollBotones.setStyle("-fx-background: transparent; -fx-border-color: transparent;");
-
         // Configurar el ScrollPane para expandirse y ocupar todo el espacio disponible
         VBox.setVgrow(scrollBotones, Priority.ALWAYS);
 
@@ -130,7 +124,41 @@ public class vista implements interfaceReproductorListener{
         }
         return null;
     }
+    
+public void seleccionarImagenParaBoton(int idBoton) {
+          	
+    	FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Seleccionar imagen");
+        fileChooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.jpg", "*.jpeg", "*.gif")
+        );
+        
+        File archivo = fileChooser.showOpenDialog(null);
+        if (archivo != null)
+        	setearImagenBoton(idBoton,archivo.toURI().toString());
+        
+    }
 
+	private void setearImagenBoton(int idBoton,String ruta) 
+	{
+         Image imagen = new Image(ruta);
+         ImageView imageView = new ImageView(imagen);
+
+         botonSonido boton = mapaBotonesSonido.get(idBoton);
+         Button botonFx = boton.getBotonAsociado();
+
+         imageView.setPreserveRatio(false);
+         imageView.setFitWidth(botonFx.getPrefWidth());
+         imageView.setFitHeight(botonFx.getPrefHeight());
+
+         StackPane contenedor = boton.getBordeBoton();
+         contenedor.getChildren().setAll(imageView, botonFx); // Imagen de fondo, botón encima
+         botonFx.toFront(); // Asegura que el botón sea interactivo
+
+         boton.setRutaImagen(ruta);
+
+	}
+    
     // llamado desde el controlador
     public String[] seleccionarArchivos() {
         // Abre un diálogo para seleccionar archivos
@@ -142,21 +170,20 @@ public class vista implements interfaceReproductorListener{
     }
 
     // llamado desde el controlador
-    public void agregarBoton(String ruta,String nombreCancion,int idBoton,double duracion,EventHandler<ActionEvent> handler) {
-    	saveItem.setDisable(false);
-    	Button boton = new Button(nombreCancion);
-        boton.setOnAction(handler);
-        botonSonido botonSonido = new botonSonido(ruta,nombreCancion,idBoton,duracion,boton);
-        agregarListenerBotonDerecho(botonSonido);
-        mapaBotonesSonido.put(idBoton, botonSonido);
-        panelBotones.getChildren().add(boton);
-    }
     
+    public void agregarBoton(String ruta, String nombre, int id, double duracion, EventHandler<ActionEvent> handler) {
+        botonSonido boton = botonFactory.crearBoton(ruta, nombre, id, duracion, handler, panelBotones);
+        mapaBotonesSonido.put(id, boton);
+        agregarListenerBotonDerecho(boton);
+        saveItem.setDisable(false);
+    }
+
+
     private void agregarListenerBotonDerecho(botonSonido botonSonido) 
     {
     	Button boton = botonSonido.getBotonAsociado();
     	  // Crear el menú contextual
-        ContextMenu menuContextual = crearMenuContextual.menuContextual(this);
+        ContextMenu menuContextual = crearMenuContextual.menuContextual(this,botonSonido.getIdBoton());
 
         // Configurar el evento de menú contextual
         boton.setOnContextMenuRequested((ContextMenuEvent e) -> {
@@ -192,18 +219,24 @@ public class vista implements interfaceReproductorListener{
         }
     }
 	
-	public void colorearBotonReproduccion(int idBoton,boolean reproduciendo) 
-    {
+	public void colorearBotonReproduccion(int idBoton, boolean reproduciendo)
+	{
+	 
 		botonSonido botonSonido = mapaBotonesSonido.get(idBoton);
-		Button boton = botonSonido.getBotonAsociado();
-		
-		if(reproduciendo)
-    		 boton.getStyleClass().add("boton-reproduccion"); // el archivo CSS estilosBoton
-    	else
-    		boton.getStyleClass().remove("boton-reproduccion");
-		
-		botonSonido.setBotonApretado(reproduciendo);
-    }
+	    // Button boton = botonSonido.getBotonAsociado(); // Ya no necesitamos interactuar directamente con el botón para el estilo amarillo
+
+	    botonSonido.setBotonApretado(reproduciendo); // Actualiza el estado de reproducción
+
+	    if (botonSonido.getBotonApretado()) 
+            botonSonido.getBordeBoton().setStyle("-fx-border-color: yellow; -fx-border-width: 2;");
+         else if (botonSonido.getBotonAsociado().isFocused()) 
+            botonSonido.getBordeBoton().setStyle("-fx-border-color: green; -fx-border-width: 2;");
+         else if (botonSonido.getBotonAsociado().isHover()) 
+            botonSonido.getBordeBoton().setStyle("-fx-border-color: dodgerblue; -fx-border-width: 2;");
+         else 
+            botonSonido.getBordeBoton().setStyle("-fx-border-color: black; -fx-border-width: 2;");
+        
+	}
 	
 	 public datosSonidoLectura getDatosSonido(int idBoton) 
 	 {
@@ -226,20 +259,43 @@ public class vista implements interfaceReproductorListener{
     //eventos
 
 	@Override
-	 public void onReproduccionTerminada(int idBoton) {
-    	botonSonido boton = mapaBotonesSonido.get(idBoton);
-        Button botonInterface = boton.getBotonAsociado(); 
-        botonInterface.getStyleClass().remove("boton-reproduccion");
-    	boton.setBotonApretado(false);
-    }
+	public void onReproduccionTerminada(int idBoton) {
+	    botonSonido boton = mapaBotonesSonido.get(idBoton); 
+	    Button botonFx = boton.getBotonAsociado();
+
+	    if (botonFx.isFocused()) {
+	        boton.getBordeBoton().setStyle("-fx-border-color: green; -fx-border-width: 2;");
+	    } else {
+	        boton.getBordeBoton().setStyle("-fx-border-color: black; -fx-border-width: 2;");
+	    }
+
+	    boton.setBotonApretado(false);
+	}
+
 	
-    public VBox getRoot() {
+    public VBox getRoot()
+    {
         return root;
     }
     
-    public void borrarTodosLosBotones() {
+    public void borrarTodosLosBotones()
+    {
         mapaBotonesSonido.clear();
         panelBotones.getChildren().clear(); // limpia todos los nodos visibles
+    }
+    
+    public void borrarBoton(int idBoton)
+    {
+        botonSonido boton = mapaBotonesSonido.get(idBoton);
+        
+        if(boton.getBotonApretado()) 
+        {
+        	controlador.borrarReproduccion(idBoton);
+        	onReproduccionTerminada(idBoton);
+        }
+        
+        mapaBotonesSonido.remove(idBoton);
+        panelBotones.getChildren().remove(boton.getContenedor());    
     }
     
     // seters para cargar datos
@@ -265,6 +321,14 @@ public class vista implements interfaceReproductorListener{
     {
     	botonSonido boton =  mapaBotonesSonido.get(idBoton);
     	boton.setLoop(loop);
+    }
+    
+    public void setImagen(int idBoton,String rutaImagen) 
+    {
+    	if(rutaImagen == null || rutaImagen.isEmpty())
+    		return;
+    	
+    	setearImagenBoton(idBoton,rutaImagen);
     }
 
 	@Override

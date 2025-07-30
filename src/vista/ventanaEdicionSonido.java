@@ -114,15 +114,9 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     }
     
     private void configurarCierreVentana() {
-    	 setOnCloseRequest(e ->{ 
-    		 // Actualizar nombre si fue editado
-    	        String nuevoNombre = textFieldNombreArchivo.getText().trim();
-    	        if (!nuevoNombre.isEmpty()) {
-    	            botonAsociado.setNombreArchivo(nuevoNombre);
-    	            botonAsociado.getBotonAsociado().setText(nuevoNombre); // actualiza el texto del botón
-    	        }
-    		 botonAsociado.setVentanaEdicion(null);
-    	 });
+    	setOnCloseRequest(e ->{ 
+    		botonAsociado.setVentanaEdicion(null);
+    	});
     }
     
     private void crearBotonPlay() {
@@ -248,12 +242,14 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     	    });
 	}
     
-    private void crearCampoNombreEditable() {
+    private void crearCampoNombreEditable()
+    {
         textFieldNombreArchivo = new TextField(botonAsociado.getNombreArchivo());
         textFieldNombreArchivo.setPrefWidth(300);
         textFieldNombreArchivo.setOnAction(e -> {
             String nuevoNombre = textFieldNombreArchivo.getText().trim();
             if (!nuevoNombre.isEmpty()) {
+            	botonAsociado.setNombreLabel(nuevoNombre);
                 botonAsociado.setNombreArchivo(nuevoNombre);
                 setTitle(nuevoNombre); // también actualiza el título de la ventana
             }
@@ -295,7 +291,6 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	@Override
 	public void onReproduccionTerminada(int idBoton) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -323,8 +318,5 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 		float segundos = (float) sliderProgreso.getValue();
 		controlador.actualizarAudio(botonAsociado.getDatosLectura(), segundos);
 		controlador.setObserver(this);
-		//PauseTransition delay = new PauseTransition(Duration.millis(100f));
-	    //delay.setOnFinished(e -> controlador.setObserver(this));
-	    //delay.play();
 	}
 }

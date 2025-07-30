@@ -2,6 +2,9 @@ package vista;
 
 import archivosSoloLectura.datosSonidoLectura;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class botonSonido {
@@ -17,9 +20,14 @@ public class botonSonido {
 	// atributos sonidos
 	private boolean loop;
 	private double volumen,fadeIn,fadeOut; // escala de volumen [0,1]
+	private Label labelNombre;
+	private VBox contenedor;
+	private StackPane bordeBoton;
 	
-	public botonSonido(String ruta,String nombreArchivo,int idBoton, double duracion, Button botonAsociado) 
+	public botonSonido(String ruta,String nombreArchivo,int idBoton, double duracion, 
+						Button botonAsociado, Label labelNombre) 
 	{
+		this.labelNombre = labelNombre;
 		this.duracion = duracion; 
 		this.nombreArchivo = nombreArchivo;
 		this.idBoton = idBoton;
@@ -29,6 +37,12 @@ public class botonSonido {
 		botonApretado = false;
 		volumen = 1;
 	}
+	
+	public void setRutaImagen(String rutaImagen)
+	{
+		this.rutaImagen = rutaImagen;
+		System.out.println("ruta: "+rutaImagen);
+	}	
 	
 	public String getRutaImagen() 
 	{
@@ -68,7 +82,11 @@ public class botonSonido {
 	
 	// setters y getters atributos audio
 
-
+	public void setNombreLabel(String nombreArchivo)
+	{
+		labelNombre.setText(nombreArchivo);
+	}
+	
 	public void setNombreArchivo(String nombreArchivo) 
 	{
 		this.nombreArchivo = nombreArchivo;
@@ -134,11 +152,35 @@ public class botonSonido {
 		return idBoton;
 	}
 	
+	public void setContenedor(VBox contenedor) 
+	{
+		this.contenedor = contenedor;
+	}
+	
+	public VBox getContenedor() 
+	{
+		return contenedor;
+	}
+	
+	public void setBordeBoton(StackPane borde) 
+	{
+		bordeBoton = borde;
+	}
+	
+	public StackPane getBordeBoton() 
+	{
+		return bordeBoton;
+	}
+	
 
 	 // Método para obtener una versión de solo lectura
     public datosSonidoLectura getDatosLectura() {
 
-        return new datosSonidoLectura(rutaArchivoAudio, nombreArchivo,idBoton,
-        								volumen,duracion,fadeIn,fadeOut, loop);
+    	datosSonidoLectura datos = new datosSonidoLectura(rutaArchivoAudio, nombreArchivo,idBoton,
+				volumen,duracion,fadeIn,fadeOut, loop);
+    	
+    	datos.setRutaImagen(rutaImagen);
+    	
+    	return datos;
     }
 }

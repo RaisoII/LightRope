@@ -6,8 +6,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.dom.DOMSource;
@@ -39,8 +37,20 @@ public class XMLManager {
                 Element nombre = doc.createElement("nombre");
                 nombre.setTextContent(datos.getNombreArchivo());
 
-                Element rutaArchivo = doc.createElement("ruta");
+                Element rutaArchivo = doc.createElement("rutaArchivo");
                 rutaArchivo.setTextContent(datos.getRutaArchivoAudio());
+
+                Element elementoRutaImagen = doc.createElement("rutaImagen");
+            
+                String rutaImagen = datos.getRutaImagen();
+                System.out.println("ruta imagen: "+rutaImagen);
+                
+                if (rutaImagen != null)
+                	elementoRutaImagen.setTextContent(rutaImagen);
+                 else 
+                	elementoRutaImagen.setTextContent("");
+                
+                
                 
                 Element volumen = doc.createElement("volumen");
                 volumen.setTextContent(String.valueOf(datos.getVolumen()));
@@ -59,6 +69,7 @@ public class XMLManager {
                 
                 sonido.appendChild(nombre);
                 sonido.appendChild(rutaArchivo);
+                sonido.appendChild(elementoRutaImagen);
                 sonido.appendChild(volumen);
                 sonido.appendChild(duracion);
                 sonido.appendChild(loop);
@@ -100,7 +111,8 @@ public class XMLManager {
                 Element elemSonido = (Element) listaSonidos.item(i);
 
                 String nombre = elemSonido.getElementsByTagName("nombre").item(0).getTextContent();
-                String rutaArchivo = elemSonido.getElementsByTagName("ruta").item(0).getTextContent();
+                String rutaArchivo = elemSonido.getElementsByTagName("rutaArchivo").item(0).getTextContent();
+                String rutaImagen = elemSonido.getElementsByTagName("rutaImagen").item(0).getTextContent();
                 float volumen = Float.parseFloat(elemSonido.getElementsByTagName("volumen").item(0).getTextContent());
                 float duracion = Float.parseFloat(elemSonido.getElementsByTagName("duracion").item(0).getTextContent());
                 boolean loop = Boolean.parseBoolean(elemSonido.getElementsByTagName("loop").item(0).getTextContent());
@@ -109,6 +121,7 @@ public class XMLManager {
           
                 datosSonidoLectura datos = new datosSonidoLectura(rutaArchivo,nombre,i,
                 													volumen,duracion,fadeIn,fadeOut,loop);
+                datos.setRutaImagen(rutaImagen);
                 datosCargados.add(datos);
             }
 

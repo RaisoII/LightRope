@@ -97,6 +97,7 @@ public class controlador {
                 event -> manejarReproduccion(datos.getRutaArchivoAudio(),idBotonEstatico)
             );
             
+        	vista.setImagen(idBotonEstatico,datos.getRutaImagen());
             vista.setVolumen(idBotonEstatico, datos.getVolumen());
             vista.setFadeIn(idBotonEstatico, datos.getFadeIn());
             vista.setFadeOut(idBotonEstatico, datos.getFadeOut());
@@ -199,6 +200,11 @@ public class controlador {
     
     public void actualizarAudio(datosSonidoLectura datos, float segundos) {
     	reproducirSonido.actualizarAudio(datos,segundos);
+    }
+    
+    public void borrarReproduccion(int idBoton) 
+    {
+   	 	reproducirSonido.detenerSonido(idBoton);
     }
     
     private void ejecutarReproduccion(datosSonidoLectura datos) 
