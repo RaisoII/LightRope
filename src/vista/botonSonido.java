@@ -1,5 +1,8 @@
 package vista;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import archivosSoloLectura.datosSonidoLectura;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -12,6 +15,7 @@ public class botonSonido {
 	private String rutaArchivoAudio;
 	private String nombreArchivo;
 	private String rutaImagen;
+	private List<String> listaTags;
 	private Button botonInterfaceAsociado;
 	private double duracion;
 	private Stage ventanaEdicion;  // Ventana asociada al botón
@@ -27,6 +31,7 @@ public class botonSonido {
 	public botonSonido(String ruta,String nombreArchivo,int idBoton, double duracion, 
 						Button botonAsociado, Label labelNombre) 
 	{
+		listaTags = new ArrayList<String>();
 		this.labelNombre = labelNombre;
 		this.duracion = duracion; 
 		this.nombreArchivo = nombreArchivo;
@@ -170,6 +175,17 @@ public class botonSonido {
 	public StackPane getBordeBoton() 
 	{
 		return bordeBoton;
+	}
+	
+	public void setTag(String tag) 
+	{
+		if(!listaTags.contains(tag))
+			listaTags.add(tag);
+	}
+	
+	public List<String> getTags()
+	{
+		return listaTags;
 	}
 	
 

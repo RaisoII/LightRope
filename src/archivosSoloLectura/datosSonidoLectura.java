@@ -1,10 +1,14 @@
 package archivosSoloLectura;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class datosSonidoLectura {
  	
 	private String rutaArchivoAudio;
 	private String rutaImagen;
 	private String nombreArchivo;
+	private List<String> listaTags;
 	private boolean loop;
 	private double volumen,fadeIn,fadeOut,duracion;
 	private int idBoton;
@@ -12,6 +16,7 @@ public class datosSonidoLectura {
 	public datosSonidoLectura(String rutaArchivoAudio, String nombreArchivo,int idBoton, double volumen,
 			double duracion, double fadeIn,double fadeOut,boolean loop)
 	{
+		listaTags = new ArrayList<String>();
 		this.duracion = duracion;
 		this.rutaArchivoAudio = rutaArchivoAudio;
 	    this.nombreArchivo = nombreArchivo;
@@ -70,5 +75,16 @@ public class datosSonidoLectura {
 	public int getIdBoton() 
 	{
 		return idBoton;
+	}
+	
+	public void setTag(String tag) 
+	{
+		if(!listaTags.contains(tag))
+			listaTags.add(tag);
+	}
+	
+	public List<String> getTags()
+	{
+		return listaTags;
 	}
 }

@@ -23,7 +23,6 @@ public class botonFactory {
 
         Label nombreLabel = crearLabel(nombreCancion);
         TextField textField = crearTextField(nombreCancion);
-        alternarEdicion(nombreLabel, textField);
 
         botonSonido boton = new botonSonido(ruta, nombreCancion, idBoton, duracion, botonFx, nombreLabel);
         boton.setBordeBoton(contenedorConBorde);
@@ -39,6 +38,9 @@ public class botonFactory {
         boton.setContenedor(contenedor);
 
         panelBotones.getChildren().add(contenedor);
+        
+        alternarEdicion(nombreLabel, textField,boton);
+        
         return boton;
     }
 
@@ -61,7 +63,7 @@ public class botonFactory {
         return field;
     }
 
-    private static void alternarEdicion(Label label, TextField field) {
+    private static void alternarEdicion(Label label, TextField field,botonSonido boton) {
         label.setOnMouseClicked(e -> {
             field.setText(label.getText());
             label.setVisible(false);
@@ -77,6 +79,7 @@ public class botonFactory {
             if (!nuevoTexto.isEmpty()) {
                 label.setText(nuevoTexto);
                 label.setTooltip(new Tooltip(nuevoTexto));
+                boton.setNombreArchivo(nuevoTexto);
             }
             field.setVisible(false);
             field.setManaged(false);
