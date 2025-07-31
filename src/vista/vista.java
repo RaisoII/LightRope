@@ -19,10 +19,12 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -41,6 +43,11 @@ public class vista implements interfaceReproductorListener{
     private MenuItem openItem,saveItem,loadItem;
     private TilePane  panelBotones;
     private TextField barraBusqueda;
+    private Button botonFiltrarTag;
+    private Button botonLimpiarTags;
+    private Popup popupTags;
+    private FlowPane tagsContainer;
+    private FlowPane filtroTagsContainer;
     
     private MenuBar menuBar = new MenuBar();
     
@@ -64,51 +71,53 @@ public class vista implements interfaceReproductorListener{
         // Layout principal con BorderPane
         BorderPane borderPane = new BorderPane();
 
-        // Barra de búsqueda
+        // --- Área de Filtros de Tags (FlowPane para la "matriz" de tags) ---
+        filtroTagsContainer = new FlowPane(5, 5); // Espaciado horizontal y vertical
+        filtroTagsContainer.setPrefHeight(22);
+        filtroTagsContainer.setAlignment(Pos.CENTER_LEFT);
+        filtroTagsContainer.setStyle("-fx-border-color: #ccc; -fx-border-radius: 3; -fx-background-color: white;");
+
+        // TextField auxiliar para escribir cuando no hay tags
         barraBusqueda = new TextField();
         barraBusqueda.setPromptText("Find Sound...");
-        // Define el ancho preferido y máximo de la barra de búsqueda.
-        // Esto es crucial para controlar el ancho de la lista de sugerencias.
-        barraBusqueda.setPrefWidth(250); // Puedes ajustar este valor
-        barraBusqueda.setMaxWidth(250);  // Asegura que no se estire más allá de este punto
-        barraBusqueda.setStyle(
-            "-fx-font-size: 11px; " +
-            "-fx-padding: 2 6 2 6;" +
-            "-fx-pref-height: 22;"
-        );
-        barraBusqueda.textProperty().addListener((obs, oldText, newText) -> filtrarBotones(newText));
+        barraBusqueda.setPrefWidth(250);
+        barraBusqueda.setMaxWidth(250);
+        barraBusqueda.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 2 6 2 6;");
 
-        // Botón de tags
-        Button botonTags = new Button("Tags");
-        botonTags.setOnAction(e -> abrirVentanaTags());
+        // Escuchador para el TextField auxiliar
+        barraBusqueda.textProperty().addListener((obs, oldText, newText) -> {
+            filtrarBotones();
+        });
+        
+        filtroTagsContainer.getChildren().add(barraBusqueda);
+        // FlowPane no usa HBox.setHgrow, se ajusta automáticamente
+        // --- FIN NUEVA ÁREA DE FILTROS ---
+        
+        botonLimpiarTags = new Button("✕");
+        botonLimpiarTags.setStyle("-fx-background-color: transparent; -fx-text-fill: gray; -fx-padding: 0; -fx-font-size: 16px;");
+        botonLimpiarTags.setTooltip(new Tooltip("Eliminar todos los tags"));
+        botonLimpiarTags.setVisible(false); // Inicialmente oculto
+        botonLimpiarTags.setManaged(false); // No ocupa espacio
+        botonLimpiarTags.setOnAction(e -> limpiarTags());
 
-        // --- Sugerencias flotantes ---
-        listaTagsSugeridos = new ListView<>();
-        listaTagsSugeridos.setMaxHeight(100);
-        // IMPORTANTE: Establecemos un MaxWidth inicial. Este será actualizado en Platform.runLater
-        // pero es bueno tener un valor por defecto que no sea "infinito"
-        listaTagsSugeridos.setMaxWidth(barraBusqueda.getMaxWidth()); // Limita inicialmente al max de la barra
-        listaTagsSugeridos.setVisible(false);
-        listaTagsSugeridos.setManaged(false);
-        listaTagsSugeridos.setMouseTransparent(false);
-        listaTagsSugeridos.setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-width: 1px;");
-
-        listaTagsSugeridos.setOnMouseClicked(e -> {
-            String seleccionado = listaTagsSugeridos.getSelectionModel().getSelectedItem();
-            if (seleccionado != null) {
-                barraBusqueda.setText("#" + seleccionado);
-                barraBusqueda.positionCaret(barraBusqueda.getText().length());
-                listaTagsSugeridos.setVisible(false);
-                listaTagsSugeridos.setManaged(false);
+        // Botón "MÁS" para abrir/cerrar el popup de tags
+        botonFiltrarTag = new Button("MÁS");
+        botonFiltrarTag.setOnAction(e -> {
+            if (popupTags == null || !popupTags.isShowing()) {
+                filtrarTags(botonFiltrarTag);
+            } else {
+                popupTags.hide();
             }
         });
 
-        // Alineación búsqueda + botón
-        HBox barraBusquedaBox = new HBox(10, barraBusqueda, botonTags);
-        barraBusquedaBox.setAlignment(Pos.CENTER_LEFT);
+        // Botón "Tags" (si se usa para otra funcionalidad)
+        Button botonTags = new Button("Tags");
+        botonTags.setOnAction(e -> abrirVentanaTags());
+
+        // Alineación principal
+        HBox barraBusquedaBox = new HBox(10, filtroTagsContainer, botonLimpiarTags, botonFiltrarTag, botonTags); barraBusquedaBox.setAlignment(Pos.CENTER_LEFT);
         barraBusquedaBox.setPadding(new Insets(5));
-        // Es buena práctica asegurarse de que los hijos no crezcan más allá de lo necesario en un HBox
-        HBox.setHgrow(barraBusqueda, Priority.NEVER); // No permitimos que la barra de búsqueda se estire infinitamente
+        HBox.setHgrow(filtroTagsContainer, Priority.ALWAYS);
 
         VBox topContainer = new VBox(menuBar, barraBusquedaBox);
         borderPane.setTop(topContainer);
@@ -130,43 +139,12 @@ public class vista implements interfaceReproductorListener{
         VBox.setVgrow(scrollBotones, Priority.ALWAYS);
         borderPane.setCenter(scrollBotones);
 
-        // Contenedor raíz con StackPane para permitir superposición flotante
-        StackPane stack = new StackPane();
-        stack.getChildren().add(borderPane); // El diseño principal
-        stack.getChildren().add(listaTagsSugeridos); // La lista de sugerencias flotante
-        // Alineamos la lista de sugerencias al TOP_LEFT del StackPane para que los márgenes funcionen correctamente
-        StackPane.setAlignment(listaTagsSugeridos, Pos.TOP_LEFT);
-
-        root = new VBox(stack);
-        VBox.setVgrow(stack, Priority.ALWAYS);
-
-        // --- Posicionar y ajustar ancho de la lista flotante debajo de barraBusqueda ---
-        Platform.runLater(() -> {
-            // Obtener la posición de la barra de búsqueda en las coordenadas de la escena
-            javafx.geometry.Point2D barraBusquedaScenePos = barraBusqueda.localToScene(0, 0);
-
-            // Convertir esa posición a las coordenadas locales del StackPane
-            javafx.geometry.Point2D listaSugerenciasStackPos = stack.sceneToLocal(barraBusquedaScenePos.getX(), barraBusquedaScenePos.getY());
-
-            // Calcular los márgenes para la lista de sugerencias
-            double margenTop = listaSugerenciasStackPos.getY() + barraBusqueda.getHeight();
-            double margenLeft = listaSugerenciasStackPos.getX();
-
-            // Aplicar los márgenes para posicionar la lista
-            StackPane.setMargin(listaTagsSugeridos, new Insets(margenTop, 0, 0, margenLeft));
-
-            // Establecer el ancho preferido y máximo de la lista de sugerencias
-            // Es crucial establecer AMBOS para evitar que se estire
-            listaTagsSugeridos.setPrefWidth(barraBusqueda.getWidth());
-            listaTagsSugeridos.setMaxWidth(barraBusqueda.getWidth()); // <-- ESTO ES CLAVE
-        });
-
-        // Llamada al método que configura listeners adicionales para la barra de búsqueda
-        configurarListenersBusqueda();
-
+        // Contenedor raíz
+        root = new VBox(borderPane);
+        VBox.setVgrow(borderPane, Priority.ALWAYS);
+        
         Platform.runLater(() -> root.requestFocus());
     }
-
     
     //llamados desde el controlador
     public void agregarListenerMenuItemOpen(EventHandler<ActionEvent> handler)
@@ -184,186 +162,228 @@ public class vista implements interfaceReproductorListener{
     	loadItem.setOnAction(handler);
     }
     
-    
-    private void configurarListenersBusqueda() {
-        // Barra: Navegar hacia abajo, cerrar con ESC
-        barraBusqueda.setOnKeyPressed(event -> {
-            switch (event.getCode()) {
-                case DOWN:
-                    if (listaTagsSugeridos.isVisible() && !listaTagsSugeridos.getItems().isEmpty()) {
-                        listaTagsSugeridos.requestFocus();
-                        listaTagsSugeridos.getSelectionModel().selectFirst();
-                        event.consume(); // Consumir el evento para que no se mueva el caret en la barra
-                    }
-                    break;
-                case ESCAPE:
-                    listaTagsSugeridos.setVisible(false);
-                    listaTagsSugeridos.setManaged(false);
-                    barraBusqueda.requestFocus(); // Asegurar foco en la barra al cerrar
-                    Platform.runLater(() -> barraBusqueda.deselect()); // Deseleccionar por si acaso
-                    event.consume(); // Consumir el evento para que no se propague
-                    break;
+    private void filtrarTags(Button botonQueAbre) {
+        // 1. Asegurarse de que el Popup y el contenedor de tags existan
+        if (popupTags == null) {
+            popupTags = new Popup();
+            VBox popupLayout = new VBox(5);
+            popupLayout.setPadding(new Insets(10));
+            popupLayout.setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-width: 1; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
+            
+            tagsContainer = new FlowPane(5, 5); 
+
+            popupLayout.getChildren().add(tagsContainer);
+            popupTags.getContent().add(popupLayout);
+            popupTags.setAutoHide(true);
+            popupTags.setOnHidden(e -> barraBusqueda.setEditable(true));
+        }
+
+        // 2. Limpiar y recrear los botones de tags CADA VEZ
+        tagsContainer.getChildren().clear();
+        Set<String> tagsEnBarra = obtenerTagsDeBarra();
+
+        for (String tag : tagsGlobales) {
+            Button tagButton = crearBotonPopupTag(tag);
+            
+            if (tagsEnBarra.contains(tag.toLowerCase())) {
+                tagButton.getStyleClass().add("tag-seleccionado");
             }
-        });
 
-        // Lista: Enter para seleccionar, ESC para cerrar, navegación con flechas (DOWN, UP)
-        listaTagsSugeridos.setOnKeyPressed(event -> {
-            switch (event.getCode()) {
-                case ENTER:
-                    String seleccionado = listaTagsSugeridos.getSelectionModel().getSelectedItem();
-                    if (seleccionado != null) {
-                        String textoActual = barraBusqueda.getText();
-                        int lastHashIndex = textoActual.lastIndexOf('#');
-                        String textoBaseParaNuevoTag = "";
-
-                        if (lastHashIndex != -1) {
-                            textoBaseParaNuevoTag = textoActual.substring(0, lastHashIndex + 1);
-                            if (lastHashIndex + 1 < textoActual.length()) {
-                                String tagParcial = textoActual.substring(lastHashIndex + 1);
-                                if (!tagParcial.isEmpty() && !tagParcial.contains("#")) {
-                                    textoBaseParaNuevoTag = textoActual.substring(0, lastHashIndex + 1);
-                                }
-                            }
-                        } else {
-                            textoBaseParaNuevoTag = "#";
-                        }
-
-                        String nuevoTexto = textoBaseParaNuevoTag + seleccionado + "#";
-                        barraBusqueda.setText(nuevoTexto);
-
-                        // --- LA SOLUCIÓN MÁS ROBUSTA AQUÍ ---
-                        // Programamos estas acciones para que se ejecuten después de que el setText()
-                        // y el ciclo de layout de JavaFX se hayan completado.
-                        Platform.runLater(() -> {
-                            barraBusqueda.requestFocus(); // Reafirmar el foco
-                            barraBusqueda.positionCaret(nuevoTexto.length()); // Posicionar el cursor al final
-                            barraBusqueda.deselect(); // Eliminar cualquier selección
-                        });
-                        // --- FIN SOLUCIÓN ROBUSTA ---
-                    }
-                    listaTagsSugeridos.setVisible(false);
-                    listaTagsSugeridos.setManaged(false);
-                    // No necesitas requestFocus aquí, ya lo hace el Platform.runLater
-                    event.consume();
-                    break;
-
-                case ESCAPE:
-                    listaTagsSugeridos.setVisible(false);
-                    listaTagsSugeridos.setManaged(false);
-                    barraBusqueda.requestFocus();
-                    Platform.runLater(() -> barraBusqueda.deselect()); // También al cerrar con ESC
-                    event.consume();
-                    break;
-
-                case UP:
-                    if (listaTagsSugeridos.getSelectionModel().getSelectedIndex() == 0) {
-                        barraBusqueda.requestFocus();
-                        barraBusqueda.positionCaret(barraBusqueda.getText().length());
-                        barraBusqueda.selectEnd(); // Asegura que no haya selección
-                        listaTagsSugeridos.setVisible(false);
-                        listaTagsSugeridos.setManaged(false);
-                        event.consume();
-                    }
-                    break;
-            }
-        });
-
-        // Asegura que la lista responda al teclado
-        listaTagsSugeridos.setFocusTraversable(true);
+            tagButton.setOnAction(e -> {
+                if (tagButton.getStyleClass().contains("tag-seleccionado")) {
+                    tagButton.getStyleClass().remove("tag-seleccionado");
+                    eliminarTagDeBarra(tag);
+                } else {
+                    tagButton.getStyleClass().add("tag-seleccionado");
+                    agregarTagABarra(tag);
+                }
+            });
+            tagsContainer.getChildren().add(tagButton);
+        }
+        
+        // 3. --- Lógica CLAVE: Posicionar y mostrar el Popup centrado ---
+        popupTags.show(botonQueAbre, 0, 0); // Muestra el popup temporalmente para obtener su tamaño
+        
+        double popupWidth = popupTags.getWidth();
+        double buttonWidth = botonQueAbre.getWidth();
+        double buttonScreenX = botonQueAbre.localToScreen(0, 0).getX();
+        
+        // Calcula la nueva posición X para centrarlo
+        double popupX = buttonScreenX + (buttonWidth / 2) - (popupWidth / 2);
+        double popupY = botonQueAbre.localToScreen(0, 0).getY() + botonQueAbre.getHeight();
+        
+        popupTags.hide(); // Oculta el popup temporal
+        popupTags.show(botonQueAbre, popupX, popupY);
+        barraBusqueda.setEditable(false);
+        // --- FIN Lógica de Posicionamiento ---
     }
     
-    private void filtrarBotones(String texto) {
-        panelBotones.getChildren().clear();
-        String textoBusqueda = texto.toLowerCase().trim();
+    
+    private Button crearBotonPopupTag(String tag) {
+        Button tagButton = new Button(tag);
+        // Aplicamos el mismo estilo de los tags de la barra
+        tagButton.setStyle("-fx-background-color: #3870b2; -fx-background-radius: 3; -fx-padding: 3 5 3 5; -fx-text-fill: white; -fx-font-size: 11px;");
+        tagButton.setAlignment(Pos.CENTER);
+        return tagButton;
+    }
+    
+    // --- Métodos de ayuda ---
 
-        // Limpia y oculta la lista de sugerencias al inicio de cada filtro
-        listaTagsSugeridos.getItems().clear();
-        listaTagsSugeridos.setVisible(false);
-        listaTagsSugeridos.setManaged(false);
-
-        // --- Lógica para Múltiples Tags y Sugerencias ---
-        if (textoBusqueda.startsWith("#")) {
-            // Obtenemos el texto que sigue al '#'
-            String contenidoDespuesHash = textoBusqueda.substring(1);
-
-            // Dividir el texto de búsqueda en tags individuales si hay más de un '#'
-            String[] tagsBuscadosArray = contenidoDespuesHash.split("#");
-            Set<String> tagsBuscadosSet = new HashSet<>();
-            for (String tag : tagsBuscadosArray) {
-                if (!tag.isEmpty()) { // Asegurarse de no añadir tags vacíos
-                    tagsBuscadosSet.add(tag);
-                }
+    private void agregarTagABarra(String tag) {
+        // Si la barra de búsqueda está presente, la quitamos
+        if (filtroTagsContainer.getChildren().contains(barraBusqueda)) {
+            filtroTagsContainer.getChildren().remove(barraBusqueda);
+        }
+        
+        // Si el tag ya existe, no hacemos nada
+        if (filtroTagsContainer.getChildren().stream().anyMatch(node -> {
+            if (node instanceof HBox) {
+                return ((Label) ((HBox) node).getChildren().get(0)).getText().equals(tag);
             }
+            return false;
+        })) {
+            return;
+        }
 
-            // --- Lógica de Sugerencias para el último tag parcial o todos los tags si solo hay '#' ---
-            String tagParcialParaSugerir = "";
-            if (contenidoDespuesHash.isEmpty() || contenidoDespuesHash.endsWith("#")) {
-                // Si solo hay '#' o termina con '#', sugerir TODOS los tags
-                // O si el último elemento del array de tagsBuscadosArray está vacío (ej. "#tag1#")
-                tagParcialParaSugerir = ""; // Esto significa que no hay un tag parcial específico
-            } else if (tagsBuscadosArray.length > 0) {
-                // Si hay algo escrito después del último '#', ese es el tag parcial para sugerir
-                tagParcialParaSugerir = tagsBuscadosArray[tagsBuscadosArray.length - 1];
+        // Crear el botón de tag con su 'x' para eliminar
+        HBox tagNode = crearBotonTag(tag);
+        filtroTagsContainer.getChildren().add(tagNode);
+
+        // Actualizar el filtrado de botones en el panel principal
+        filtrarBotones();
+    }
+    
+    private void eliminarTagDeBarra(String tag) {
+        filtroTagsContainer.getChildren().removeIf(node -> {
+            if (node instanceof HBox) {
+                return ((Label) ((HBox) node).getChildren().get(0)).getText().equals(tag);
             }
+            return false;
+        });
 
+        // Si no quedan tags, añadimos de nuevo la barra de búsqueda
+        if (filtroTagsContainer.getChildren().isEmpty()) {
+            filtroTagsContainer.getChildren().add(barraBusqueda);
+        }
+        
+        // Actualizar el filtrado de botones
+        filtrarBotones();
+    }
+    
+    private HBox crearBotonTag(String tag) {
+        HBox tagBox = new HBox(3);
+        tagBox.setAlignment(Pos.CENTER);
+        tagBox.setStyle("-fx-background-color: #3870b2; -fx-background-radius: 3; -fx-padding: 3 5 3 5;");
+        
+        Label tagLabel = new Label(tag);
+        tagLabel.setStyle("-fx-text-fill: white; -fx-font-size: 11px;");
 
-            // Poblar la lista de sugerencias
-            for (String tagGlobal : tagsGlobales) {
-                if (tagParcialParaSugerir.isEmpty() || tagGlobal.toLowerCase().contains(tagParcialParaSugerir)) {
-                    listaTagsSugeridos.getItems().add(tagGlobal);
-                }
-            }
+        Button closeButton = new Button("✕");
+        closeButton.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-padding: 0; -fx-font-size: 8px;");
+        closeButton.setOnAction(e -> {
+            eliminarTagDeBarra(tag);
+            // Aseguramos que el botón en el popup refleje el cambio visualmente
+            actualizarBotonEnPopup(tag, false);
+        });
+        
+        tagBox.getChildren().addAll(tagLabel, closeButton);
+        return tagBox;
+    }
 
-            // Mostrar la lista si hay coincidencias (o si solo se escribió '#')
-            listaTagsSugeridos.setVisible(!listaTagsSugeridos.getItems().isEmpty());
-            listaTagsSugeridos.setManaged(!listaTagsSugeridos.getItems().isEmpty());
-
-
-            // --- Filtrar botones por CUALQUIERA de los tags buscados ---
-            // Si no hay tags válidos en la búsqueda (ej. solo "#" o "###"), filtramos por "ningún tag" o no mostramos nada
-            // Pero para el objetivo, si hay tags en tagsBuscadosSet, filtramos por ellos.
-            // Si tagsBuscadosSet está vacío pero la búsqueda empieza con '#', mostramos todos los botones con tags.
-            // La lógica actual de filtering ya muestra todos si no hay match, así que está bien.
-
-            boolean hayTagsValidosParaFiltrar = !tagsBuscadosSet.isEmpty();
-
-            for (botonSonido boton : mapaBotonesSonido.values()) {
-                boolean coincideAlgunTag = false;
-
-                if (hayTagsValidosParaFiltrar) {
-                    // Si hay tags específicos siendo buscados (ej: #rock#pop)
-                    for (String tagBuscado : tagsBuscadosSet) {
-                        for (String tagBoton : boton.getTags()) {
-                            if (tagBoton.toLowerCase().contains(tagBuscado)) {
-                                coincideAlgunTag = true;
-                                break;
-                            }
-                        }
-                        if (coincideAlgunTag) {
-                            break;
-                        }
+    private void actualizarBotonEnPopup(String tag, boolean seleccionado) {
+        if (popupTags != null && tagsContainer != null) {
+            tagsContainer.getChildren().stream()
+                .filter(node -> node instanceof Button && ((Button) node).getText().equals(tag))
+                .findFirst()
+                .ifPresent(node -> {
+                    Button btn = (Button) node;
+                    if (seleccionado) {
+                        btn.getStyleClass().add("tag-seleccionado");
+                    } else {
+                        btn.getStyleClass().remove("tag-seleccionado");
                     }
-                } else {
-                    // Si solo se escribió '#' o '#' y algo que no es un tag,
-                    // queremos mostrar todos los botones que tengan CUALQUIER tag asociado.
-                    // Asumo que 'boton.getTags()' devuelve una colección.
-                    coincideAlgunTag = !boton.getTags().isEmpty();
-                }
+                });
+        }
+    }
+    
+    private Set<String> obtenerTagsDeBarra() {
+        Set<String> tags = new HashSet<>();
+        for (Node node : filtroTagsContainer.getChildren()) {
+            if (node instanceof HBox) {
+                Label label = (Label) ((HBox) node).getChildren().get(0);
+                tags.add(label.getText().toLowerCase());
+            }
+        }
+        return tags;
+    }
 
+ // Asegúrate de que botonFiltrarTag sea una variable de clase
+    // private Button botonFiltrarTag;
+
+    private void filtrarBotones() {
+        panelBotones.getChildren().clear();
+        Set<String> tagsBuscadosSet = obtenerTagsDeBarra();
+        String textoBusqueda = barraBusqueda.getText().toLowerCase().trim();
+        
+        boolean hayTags = !tagsBuscadosSet.isEmpty();
+        boolean hayTextoEnBarra = !textoBusqueda.isEmpty();
+
+        // Control del botón "MÁS"
+        botonFiltrarTag.setDisable(hayTextoEnBarra);
+        
+        // La barra de búsqueda (TextField) se deshabilita si hay tags
+        barraBusqueda.setDisable(hayTags);
+        
+        // --- NUEVO: Control de la visibilidad del botón de limpiar ---
+        botonLimpiarTags.setVisible(hayTags);
+        botonLimpiarTags.setManaged(hayTags);
+        // --- FIN NUEVO CONTROL ---
+
+
+        // Lógica de Filtrado de botones (sin cambios)
+        if (hayTags) {
+            // Filtrar por tags
+            for (botonSonido boton : mapaBotonesSonido.values()) {
+                boolean coincideAlgunTag = tagsBuscadosSet.stream()
+                        .anyMatch(tagBuscado -> boton.getTags().stream()
+                                .anyMatch(tagBoton -> tagBoton.toLowerCase().contains(tagBuscado)));
                 if (coincideAlgunTag) {
                     panelBotones.getChildren().add(boton.getContenedor());
                 }
             }
-
-        } else { // Si el texto de búsqueda NO empieza con '#' (búsqueda por nombre de archivo)
+        } else if (hayTextoEnBarra) {
+            // Filtrar por nombre si no hay tags activos
             for (botonSonido boton : mapaBotonesSonido.values()) {
-                boolean coincideNombre = boton.getNombreArchivo().toLowerCase().contains(textoBusqueda);
-                if (coincideNombre) {
+                if (boton.getNombreArchivo().toLowerCase().contains(textoBusqueda)) {
                     panelBotones.getChildren().add(boton.getContenedor());
+                }
+            }
+        } else {
+            // Mostrar todos los botones si el filtro está completamente vacío
+            for (botonSonido boton : mapaBotonesSonido.values()) {
+                panelBotones.getChildren().add(boton.getContenedor());
+            }
+        }
+    }
+    
+    private void limpiarTags() {
+        filtroTagsContainer.getChildren().clear();
+        filtroTagsContainer.getChildren().add(barraBusqueda);
+        barraBusqueda.setText("");
+        // Deshabilitamos la barra de búsqueda para que no se pueda escribir
+        barraBusqueda.setDisable(false);
+        filtrarBotones();
+        
+        // Aseguramos que los botones en el popup se deseleccionen
+        if (popupTags != null && tagsContainer != null) {
+            for (Node node : tagsContainer.getChildren()) {
+                if (node instanceof Button) {
+                    ((Button) node).getStyleClass().remove("tag-seleccionado");
                 }
             }
         }
     }
+    
     
     private void abrirVentanaTags() {
         ventanaTags vt = new ventanaTags(tagsGlobales);
