@@ -35,6 +35,7 @@ public class controlador {
 		setearListenerSave();
 		setearListenerLoad();
 		cargarArchivosUltimaRuta();
+		cargarTags();
 	}
 	
 	private void setearListenersVista() 
@@ -80,6 +81,19 @@ public class controlador {
 			vista.borrarTodosLosBotones();
 			crearBotonesCarga(ruta);
 		}
+	}
+	
+	public void guardarTags(List<String> listaTags) 
+	{
+		ConfigManager config = new ConfigManager();
+		config.guardarTags(listaTags);
+	}
+	
+	public void cargarTags() 
+	{
+		ConfigManager config = new ConfigManager();
+		List<String> listaTags = config.obtenerTags();
+		vista.setTagsGlobales(listaTags);
 	}
 	
 	private void crearBotonesCarga(String ruta) 

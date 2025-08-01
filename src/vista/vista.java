@@ -15,10 +15,8 @@ import java.util.Set;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.ContextMenuEvent;
@@ -47,7 +45,8 @@ public class vista implements interfaceReproductorListener{
     private Button botonLimpiarTags;
     private Popup popupTags;
     private FlowPane tagsContainer;
-    private FlowPane filtroTagsContainer;
+    private HBox filtroTagsContainer; // CAMBIO: Usamos HBox en lugar de FlowPane
+    
     
     private MenuBar menuBar = new MenuBar();
     
@@ -71,8 +70,8 @@ public class vista implements interfaceReproductorListener{
         // Layout principal con BorderPane
         BorderPane borderPane = new BorderPane();
 
-        // --- Área de Filtros de Tags (FlowPane para la "matriz" de tags) ---
-        filtroTagsContainer = new FlowPane(5, 5); // Espaciado horizontal y vertical
+        // --- Área de Filtros de Tags (CAMBIO: Usamos HBox para la barra de búsqueda) ---
+        filtroTagsContainer = new HBox(5); // Espaciado horizontal
         filtroTagsContainer.setPrefHeight(22);
         filtroTagsContainer.setAlignment(Pos.CENTER_LEFT);
         filtroTagsContainer.setStyle("-fx-border-color: #ccc; -fx-border-radius: 3; -fx-background-color: white;");
@@ -80,9 +79,10 @@ public class vista implements interfaceReproductorListener{
         // TextField auxiliar para escribir cuando no hay tags
         barraBusqueda = new TextField();
         barraBusqueda.setPromptText("Find Sound...");
-        barraBusqueda.setPrefWidth(250);
-        barraBusqueda.setMaxWidth(250);
         barraBusqueda.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 2 6 2 6;");
+        
+        // CAMBIO CLAVE: Hacemos que el TextField ocupe el espacio restante en el HBox
+        HBox.setHgrow(barraBusqueda, Priority.ALWAYS);
 
         // Escuchador para el TextField auxiliar
         barraBusqueda.textProperty().addListener((obs, oldText, newText) -> {
@@ -90,7 +90,6 @@ public class vista implements interfaceReproductorListener{
         });
         
         filtroTagsContainer.getChildren().add(barraBusqueda);
-        // FlowPane no usa HBox.setHgrow, se ajusta automáticamente
         // --- FIN NUEVA ÁREA DE FILTROS ---
         
         botonLimpiarTags = new Button("✕");
@@ -112,10 +111,11 @@ public class vista implements interfaceReproductorListener{
 
         // Botón "Tags" (si se usa para otra funcionalidad)
         Button botonTags = new Button("Tags");
-        botonTags.setOnAction(e -> abrirVentanaTags());
+        botonTags.setOnAction(e -> abrirVentanaTags()); // Asumimos que este método existe
 
         // Alineación principal
-        HBox barraBusquedaBox = new HBox(10, filtroTagsContainer, botonLimpiarTags, botonFiltrarTag, botonTags); barraBusquedaBox.setAlignment(Pos.CENTER_LEFT);
+        HBox barraBusquedaBox = new HBox(10, filtroTagsContainer, botonLimpiarTags, botonFiltrarTag, botonTags); 
+        barraBusquedaBox.setAlignment(Pos.CENTER_LEFT);
         barraBusquedaBox.setPadding(new Insets(5));
         HBox.setHgrow(filtroTagsContainer, Priority.ALWAYS);
 
@@ -169,8 +169,9 @@ public class vista implements interfaceReproductorListener{
             VBox popupLayout = new VBox(5);
             popupLayout.setPadding(new Insets(10));
             popupLayout.setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-width: 1; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
-            
-            tagsContainer = new FlowPane(5, 5); 
+
+            tagsContainer = new FlowPane(5, 5);
+            tagsContainer.setPrefWrapLength(200); // Esto ayuda a que el popup no sea excesivamente ancho
 
             popupLayout.getChildren().add(tagsContainer);
             popupTags.getContent().add(popupLayout);
@@ -184,7 +185,7 @@ public class vista implements interfaceReproductorListener{
 
         for (String tag : tagsGlobales) {
             Button tagButton = crearBotonPopupTag(tag);
-            
+
             if (tagsEnBarra.contains(tag.toLowerCase())) {
                 tagButton.getStyleClass().add("tag-seleccionado");
             }
@@ -201,23 +202,27 @@ public class vista implements interfaceReproductorListener{
             tagsContainer.getChildren().add(tagButton);
         }
         
-        // 3. --- Lógica CLAVE: Posicionar y mostrar el Popup centrado ---
-        popupTags.show(botonQueAbre, 0, 0); // Muestra el popup temporalmente para obtener su tamaño
-        
-        double popupWidth = popupTags.getWidth();
-        double buttonWidth = botonQueAbre.getWidth();
+        // --- Lógica CLAVE: Posicionar y mostrar el Popup de forma dinámica ---
+        // 3. Ocultar si ya está abierto
+        if (popupTags.isShowing()) {
+            popupTags.hide();
+        }
+
+        // 4. Calcular la posición
         double buttonScreenX = botonQueAbre.localToScreen(0, 0).getX();
-        
-        // Calcula la nueva posición X para centrarlo
-        double popupX = buttonScreenX + (buttonWidth / 2) - (popupWidth / 2);
-        double popupY = botonQueAbre.localToScreen(0, 0).getY() + botonQueAbre.getHeight();
-        
-        popupTags.hide(); // Oculta el popup temporal
+        double buttonScreenY = botonQueAbre.localToScreen(0, 0).getY();
+        double buttonHeight = botonQueAbre.getHeight();
+
+        // Se posiciona el popup justo debajo del botón.
+        // Esto es más simple y predecible que intentar centrarlo en X.
+        double popupX = buttonScreenX;
+        double popupY = buttonScreenY + buttonHeight + 5; // +5 para un pequeño margen
+
+        // 5. Mostrar el popup en la posición calculada
         popupTags.show(botonQueAbre, popupX, popupY);
         barraBusqueda.setEditable(false);
         // --- FIN Lógica de Posicionamiento ---
-    }
-    
+    }    
     
     private Button crearBotonPopupTag(String tag) {
         Button tagButton = new Button(tag);
@@ -230,10 +235,9 @@ public class vista implements interfaceReproductorListener{
     // --- Métodos de ayuda ---
 
     private void agregarTagABarra(String tag) {
-        // Si la barra de búsqueda está presente, la quitamos
-        if (filtroTagsContainer.getChildren().contains(barraBusqueda)) {
-            filtroTagsContainer.getChildren().remove(barraBusqueda);
-        }
+        // CAMBIO: En lugar de eliminarlo, lo ocultamos
+        barraBusqueda.setVisible(false);
+        barraBusqueda.setManaged(false);
         
         // Si el tag ya existe, no hacemos nada
         if (filtroTagsContainer.getChildren().stream().anyMatch(node -> {
@@ -247,8 +251,8 @@ public class vista implements interfaceReproductorListener{
 
         // Crear el botón de tag con su 'x' para eliminar
         HBox tagNode = crearBotonTag(tag);
-        filtroTagsContainer.getChildren().add(tagNode);
-
+        filtroTagsContainer.getChildren().add(filtroTagsContainer.getChildren().size(), tagNode); // Agregamos al final
+        
         // Actualizar el filtrado de botones en el panel principal
         filtrarBotones();
     }
@@ -261,14 +265,16 @@ public class vista implements interfaceReproductorListener{
             return false;
         });
 
-        // Si no quedan tags, añadimos de nuevo la barra de búsqueda
+        // CAMBIO: Si no quedan tags, hacemos la barra de búsqueda visible de nuevo
         if (filtroTagsContainer.getChildren().isEmpty()) {
-            filtroTagsContainer.getChildren().add(barraBusqueda);
+            barraBusqueda.setVisible(true);
+            barraBusqueda.setManaged(true);
         }
         
         // Actualizar el filtrado de botones
         filtrarBotones();
     }
+    
     
     private HBox crearBotonTag(String tag) {
         HBox tagBox = new HBox(3);
@@ -370,7 +376,10 @@ public class vista implements interfaceReproductorListener{
         filtroTagsContainer.getChildren().clear();
         filtroTagsContainer.getChildren().add(barraBusqueda);
         barraBusqueda.setText("");
-        // Deshabilitamos la barra de búsqueda para que no se pueda escribir
+        
+        // La barra de búsqueda siempre es visible y manejada después de limpiar
+        barraBusqueda.setVisible(true);
+        barraBusqueda.setManaged(true);
         barraBusqueda.setDisable(false);
         filtrarBotones();
         
@@ -382,15 +391,14 @@ public class vista implements interfaceReproductorListener{
                 }
             }
         }
-    }
-    
+    }    
     
     private void abrirVentanaTags() {
         ventanaTags vt = new ventanaTags(tagsGlobales);
         vt.showAndWait();
         tagsGlobales = vt.getTagsActuales(); // actualiza global
-        for(String tag: tagsGlobales)
-        	System.out.println(tag);
+        List<String> listaTags = new ArrayList<String>(tagsGlobales);
+        controlador.guardarTags(listaTags);
     }
     
     public String seleccionarArchivoXML() {
@@ -497,7 +505,9 @@ public void seleccionarImagenParaBoton(int idBoton) {
     	Stage ventanaBoton = botonActualSeleccionado.getVentanaEdicion();
     	
     	if (ventanaBoton == null) {
-            ventanaEdicionSonido nuevaVentana = new ventanaEdicionSonido(botonActualSeleccionado,controlador);
+
+    		List<String> listaTags = new ArrayList<>(tagsGlobales);
+    		ventanaEdicionSonido nuevaVentana = new ventanaEdicionSonido(botonActualSeleccionado,controlador,listaTags);
             
             botonActualSeleccionado.setVentanaEdicion(nuevaVentana);
             nuevaVentana.show();
@@ -617,6 +627,11 @@ public void seleccionarImagenParaBoton(int idBoton) {
     		return;
     	
     	setearImagenBoton(idBoton,rutaImagen);
+    }
+    
+    public void setTagsGlobales(List<String> listaTags) 
+    {
+    	tagsGlobales = new HashSet<>(listaTags);
     }
 
 	@Override

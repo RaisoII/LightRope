@@ -2,6 +2,8 @@ package vista;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import controlador.controlador;
@@ -11,15 +13,18 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter; 
@@ -38,11 +43,21 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     private BorderPane root;
     private Label labelTiempoSonido;
     private TextField textFieldNombreArchivo;
+    
+ // Dentro de la clase ventanaEdicionSonido
+    private List<String> tagsDisponibles; // La lista completa de tags que se carga desde afuera
+    private List<String> tagsSeleccionados; // Los tags que el usuario eligió para este sonido
+    private FlowPane flowPaneTagsDisponibles; // El panel que mostrará todos los tags
+    private FlowPane flowPaneTagsSeleccionados; // El panel que mostrará solo los tags elegidos
 
-    public ventanaEdicionSonido(botonSonido botonAsociado, controlador controlador) {
-        this.botonAsociado = botonAsociado;
+    public ventanaEdicionSonido(botonSonido botonAsociado, controlador controlador, List<String> tagsDisponibles) {
+       
+    	tagsSeleccionados = new ArrayList<String>();
+    	this.tagsDisponibles = tagsDisponibles;
+    	this.botonAsociado = botonAsociado;
         this.controlador = controlador;
         controlador.setObserver(this);
+       
         inicializarComponentes();
     }
 
@@ -66,44 +81,64 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     }
     
     private void configurarLayout() {
-    
-    	DecimalFormat df = new DecimalFormat("0.##",DecimalFormatSymbols.getInstance(Locale.US));
-    	TextField textFieldFadeIn = new TextField(df.format(botonAsociado.getFadeIn()));
-    	TextField textFieldFadeOut = new TextField(df.format(botonAsociado.getFadeOut()));
-    	textFieldFadeIn.setPrefWidth(40);
+
+        DecimalFormat df = new DecimalFormat("0.##", DecimalFormatSymbols.getInstance(Locale.US));
+        TextField textFieldFadeIn = new TextField(df.format(botonAsociado.getFadeIn()));
+        TextField textFieldFadeOut = new TextField(df.format(botonAsociado.getFadeOut()));
+        textFieldFadeIn.setPrefWidth(40);
         textFieldFadeOut.setPrefWidth(40);
 
         agregarListenersTextField(textFieldFadeIn, textFieldFadeOut);
 
         Label labelFadeIn = new Label("Fade In (s):");
         Label labelFadeOut = new Label("Fade Out (s):");
-        labelTiempoSonido = new Label("00:00:00 / "+ formatearDuracion(duracionSegundos));
+        labelTiempoSonido = new Label("00:00:00 / " + formatearDuracion(duracionSegundos));
 
         HBox panelProgreso = new HBox(10, sliderProgreso, labelTiempoSonido);
-        panelProgreso.setPadding(new Insets(10));
+        panelProgreso.setPadding(new Insets(10, 0, 10, 0)); // Padding para este panel
 
         HBox panelFadeIn = new HBox(10, labelFadeIn, textFieldFadeIn);
-        panelFadeIn.setPadding(new Insets(10));
+        panelFadeIn.setPadding(new Insets(0));
 
         HBox panelFadeOut = new HBox(10, labelFadeOut, textFieldFadeOut);
-        panelFadeOut.setPadding(new Insets(10));
+        panelFadeOut.setPadding(new Insets(0));
 
         HBox panelNorte = new HBox(10, botonReproducir, checkBoxLoop);
-        panelNorte.setPadding(new Insets(10));
+        panelNorte.setPadding(new Insets(10, 0, 0, 10)); // Padding para este panel
 
         HBox panelVolumen = new HBox(10, new Label("Volumen:"), sliderVolumen);
-        panelVolumen.setPadding(new Insets(10));
+        panelVolumen.setPadding(new Insets(0));
 
-        VBox panelCentro = new VBox(10, panelVolumen, panelProgreso, panelFadeIn, panelFadeOut);
-        panelCentro.setPadding(new Insets(10));
-
+        // VBox que contiene los controles de volumen, progreso y fades
+        VBox panelControlesAudio = new VBox(10, panelVolumen, panelProgreso, panelFadeIn, panelFadeOut);
+        panelControlesAudio.setPadding(new Insets(10));
         
+        // VBox que contiene el panel de selección de tags.
+        // Llama a la función que crea el panel de tags (con CheckBoxes y la visualización)
+        VBox panelTags = crearPanelSelectorTags();
+        panelTags.setPadding(new Insets(10));
+
+        // Un único VBox para contener todo el contenido central de la ventana
+        VBox contenidoCentral = new VBox(20); // Un espacio más grande para separar secciones
+        contenidoCentral.getChildren().addAll(panelControlesAudio, panelTags);
+        
+        // Crear el ScrollPane y asignarle el VBox con todo el contenido central
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setContent(contenidoCentral);
+        scrollPane.setFitToWidth(true); // Hace que el contenido se ajuste al ancho del ScrollPane
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        // Configurar el layout principal de la ventana
         root = new BorderPane();
         
+        // Panel superior con el nombre del archivo y controles de reproducción
         VBox panelSuperior = new VBox(10, textFieldNombreArchivo, panelNorte);
         panelSuperior.setPadding(new Insets(10));
         root.setTop(panelSuperior);
-        root.setCenter(panelCentro);
+        
+        // Asignar el ScrollPane (con todo el contenido) al centro
+        root.setCenter(scrollPane);
     }
     
     private void configurarEscena() {
@@ -318,5 +353,105 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 		float segundos = (float) sliderProgreso.getValue();
 		controlador.actualizarAudio(botonAsociado.getDatosLectura(), segundos);
 		controlador.setObserver(this);
+	}
+	
+	private VBox crearPanelSelectorTags() {
+	    
+		// Panel para los tags seleccionados
+	    Label tituloSeleccionados = new Label("Tags seleccionados:");
+	    tituloSeleccionados.setStyle("-fx-font-weight: bold;");
+	    
+	    flowPaneTagsSeleccionados = new FlowPane(5, 5); // Espacio entre tags
+	    flowPaneTagsSeleccionados.setStyle("-fx-border-color: lightgray; -fx-border-width: 1; -fx-border-radius: 5;");
+	    
+	    // Panel para todos los tags disponibles (el selector)
+	    Label tituloDisponibles = new Label("Tags disponibles:");
+	    tituloDisponibles.setStyle("-fx-font-weight: bold;");
+	    
+	    flowPaneTagsDisponibles = new FlowPane(5, 5);
+	    flowPaneTagsDisponibles.setPadding(new Insets(10));
+	    flowPaneTagsDisponibles.setStyle("-fx-border-color: lightgray; -fx-border-width: 1; -fx-border-radius: 5;");
+
+	    // Llenar el panel con todos los tags como CheckBoxes
+	    for (String tag : tagsDisponibles) {
+	        CheckBox checkBoxTag = new CheckBox(tag);
+	        // Si el tag ya está en la lista de seleccionados, marcarlo
+	        checkBoxTag.setSelected(tagsSeleccionados.contains(tag));
+	        
+	        checkBoxTag.setOnAction(e -> {
+	            if (checkBoxTag.isSelected()) {
+	                tagsSeleccionados.add(tag);
+	            } else {
+	                tagsSeleccionados.remove(tag);
+	            }
+	            // Después de cada cambio, refrescamos la visualización
+	            refrescarVisualizacionTags();
+	        });
+	        flowPaneTagsDisponibles.getChildren().add(checkBoxTag);
+	    }
+	    
+	    // Al iniciar, refrescamos para mostrar los tags iniciales
+	    refrescarVisualizacionTags();
+	    
+	    botonAsociado.setListaTag(tagsSeleccionados);
+	    
+	    return new VBox(10, tituloSeleccionados, flowPaneTagsSeleccionados, tituloDisponibles, flowPaneTagsDisponibles);
+	}
+	
+	private void refrescarVisualizacionTags() {
+	    flowPaneTagsSeleccionados.getChildren().clear(); // Limpiamos para redibujar
+	    
+	    for (String tag : tagsSeleccionados) {
+	        // Usamos tu método existente para crear el HBox del tag
+	        // isDeletable = false porque la selección se hace con el CheckBox, no con un botón "X"
+	        HBox tagBox = crearTagItem(tag, false);
+	        flowPaneTagsSeleccionados.getChildren().add(tagBox);
+	    }
+	}
+	
+	
+	// Asegúrate de que este método esté dentro de tu clase ventanaEdicionSonido
+	private HBox crearTagItem(String tag, boolean isDeletable) {
+	    
+		HBox tagBox = new HBox(3);
+	    tagBox.setAlignment(Pos.CENTER_LEFT);
+	    tagBox.setStyle("-fx-background-color: #3870b2; -fx-background-radius: 3; -fx-padding: 3 5 3 5;");
+	    
+	    Label tagLabel = new Label(tag);
+	    tagLabel.setStyle("-fx-text-fill: white; -fx-font-size: 11px;");
+	    
+	    tagBox.getChildren().add(tagLabel);
+	    
+	    if (isDeletable) {
+	        Button closeButton = new Button("✕");
+	        closeButton.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-padding: 0; -fx-font-size: 8px;");
+	        
+	        closeButton.setOnAction(e -> {
+	            // El cambio clave está aquí: eliminamos de la lista de seleccionados
+	            this.tagsSeleccionados.remove(tag);
+	            
+	            // Y luego actualizamos ambas visualizaciones
+	            refrescarVisualizacionTags();
+	            // También tenemos que desmarcar el CheckBox en la lista de disponibles
+	            actualizarCheckBox(tag, false);
+	        });
+	        
+	        tagBox.getChildren().add(closeButton);
+	    }
+	    
+	    return tagBox;
+	}
+
+	// Este es un nuevo método auxiliar para desmarcar el CheckBox
+	private void actualizarCheckBox(String tag, boolean isSelected) {
+	    for (Node node : flowPaneTagsDisponibles.getChildren()) {
+	        if (node instanceof CheckBox) {
+	            CheckBox cb = (CheckBox) node;
+	            if (cb.getText().equals(tag)) {
+	                cb.setSelected(isSelected);
+	                break;
+	            }
+	        }
+	    }
 	}
 }

@@ -14,40 +14,35 @@ import java.util.Set;
 public class ventanaTags extends Stage {
 
     private Set<String> tags;
-    private TilePane panelTags; // Cambiamos a TilePane para el diseño de matriz
+    private FlowPane panelTags; // CAMBIO CLAVE: Usamos FlowPane en lugar de TilePane
 
     public ventanaTags(Set<String> tagsGlobales) {
         
-    	this.tags = new HashSet<>(tagsGlobales);
+        this.tags = new HashSet<>(tagsGlobales);
         setTitle("Tags Manager");
         initModality(Modality.APPLICATION_MODAL);
 
         // --- Sección de agregar nuevos tags (arriba) ---
         TextField nuevoTagField = new TextField();
         nuevoTagField.setPromptText("New tag");
-        nuevoTagField.setMaxWidth(Double.MAX_VALUE); // Allows the field to grow horizontally
+        nuevoTagField.setMaxWidth(Double.MAX_VALUE);
 
         nuevoTagField.textProperty().addListener((obs, oldText, newText) -> {
             if (newText.contains(" ")) {
-                // If the new text contains a space, replace it with nothing.
-                // This effectively prevents spaces from being typed.
                 nuevoTagField.setText(newText.replace(" ", ""));
             }
         });
         
-        
         Button agregarBtn = new Button("Add");
 
-        // Centralized logic for adding a tag
         Runnable addTagAction = () -> {
             String nuevoTag = nuevoTagField.getText().trim();
             if (!nuevoTag.isEmpty()) {
-                if (!this.tags.contains(nuevoTag)) { // Add check to prevent duplicates
+                if (!this.tags.contains(nuevoTag)) {
                     this.tags.add(nuevoTag);
                     nuevoTagField.clear();
                     refrescarLista();
                 } else {
-                    // Optional: Show an alert if the tag already exists
                     Alert alert = new Alert(Alert.AlertType.INFORMATION, "This tag '" + nuevoTag + "' already exists.", ButtonType.OK);
                     alert.setTitle("Duplicated Tag");
                     alert.setHeaderText(null);
@@ -56,66 +51,69 @@ public class ventanaTags extends Stage {
             }
         };
 
-        // Assign the action to the button
         agregarBtn.setOnAction(e -> addTagAction.run());
+        nuevoTagField.setOnAction(e -> addTagAction.run());
 
-        // Assign the action to the TextField when Enter is pressed
-        nuevoTagField.setOnAction(e -> addTagAction.run()); // <-- NEW: This line adds the Enter key functionality
-
-        // Container for the text field and the add button
         HBox agregarTagContainer = new HBox(5, nuevoTagField, agregarBtn);
-        agregarTagContainer.setPadding(new Insets(10, 10, 0, 10)); // More padding top and sides, less bottom
-        HBox.setHgrow(nuevoTagField, Priority.ALWAYS); // Allows the text field to expand
+        agregarTagContainer.setPadding(new Insets(10, 10, 0, 10));
+        HBox.setHgrow(nuevoTagField, Priority.ALWAYS);
 
-        // --- Section for existing tags (scrollable, matrix layout) ---
-        panelTags = new TilePane();
-        panelTags.setHgap(5); // Horizontal space between tags
-        panelTags.setVgap(5); // Vertical space between tags
-        panelTags.setPadding(new Insets(10)); // Padding around all tags
-        panelTags.setAlignment(Pos.TOP_LEFT); // Aligns tags to the left
-        panelTags.setPrefColumns(3); // Preferred number of columns, you can adjust this
+        // --- Sección para los tags existentes (scrollable, diseño de matriz) ---
+        panelTags = new FlowPane(5, 5); // CAMBIO CLAVE: El constructor establece el espacio
+        panelTags.setPadding(new Insets(10));
+        panelTags.setAlignment(Pos.TOP_LEFT);
 
         ScrollPane scrollTags = new ScrollPane(panelTags);
-        scrollTags.setFitToWidth(true); // Ensures content fits the ScrollPane's width
-        scrollTags.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED); // Shows vertical scrollbar only if needed
+        scrollTags.setFitToWidth(true);
+        scrollTags.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-        // --- Main Layout ---
-        // We use BorderPane to place the add section at the top and the tags list in the center
+        // --- Layout principal ---
         BorderPane rootLayout = new BorderPane();
-        rootLayout.setTop(agregarTagContainer); // The add section goes at the top
-        rootLayout.setCenter(scrollTags); // The ScrollPane with tags goes in the center
+        rootLayout.setTop(agregarTagContainer);
+        rootLayout.setCenter(scrollTags);
 
-        // Ensures the scroll pane grows with the window
         VBox.setVgrow(scrollTags, Priority.ALWAYS);
 
-        // Update the initial list of tags
         refrescarLista();
 
-        setScene(new Scene(rootLayout, 350, 450)); // Adjust initial window size
+        setScene(new Scene(rootLayout, 350, 450));
+    }
+    
+    // --- Método auxiliar para crear un tag ---
+    private HBox crearTagItem(String tag, boolean isDeletable) {
+        HBox tagBox = new HBox(3);
+        tagBox.setAlignment(Pos.CENTER_LEFT);
+        tagBox.setStyle("-fx-background-color: #3870b2; -fx-background-radius: 3; -fx-padding: 3 5 3 5;");
+        
+        Label tagLabel = new Label(tag);
+        tagLabel.setStyle("-fx-text-fill: white; -fx-font-size: 11px;");
+        
+        tagBox.getChildren().add(tagLabel);
+        
+        if (isDeletable) {
+            Button closeButton = new Button("✕");
+            closeButton.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-padding: 0; -fx-font-size: 8px;");
+            
+            closeButton.setOnAction(e -> {
+                this.tags.remove(tag);
+                refrescarLista();
+            });
+            
+            tagBox.getChildren().add(closeButton);
+        }
+        
+        return tagBox;
     }
 
-    private void refrescarLista() {
-        panelTags.getChildren().clear(); // Clear the TilePane instead of the VBox
+    // --- Método que actualiza la lista de tags en la interfaz ---
+    public void refrescarLista() {
+        panelTags.getChildren().clear();
         for (String tag : tags) {
-            // Each tag is represented as an HBox with a Label and a Button
-            HBox tagItem = new HBox(5); // Space between the label and the delete button
-            tagItem.setAlignment(Pos.CENTER_LEFT); // Aligns content within the HBox
-
-            Label tagLabel = new Label("#" + tag);
-            tagLabel.setStyle("-fx-font-size: 12px; -fx-padding: 3 5; -fx-background-color: #e0e0e0; -fx-border-radius: 3; -fx-background-radius: 3;"); // Style for the tag
-
-            Button eliminarBtn = new Button("✕");
-            eliminarBtn.setStyle("-fx-font-size: 10px; -fx-background-color: #f44336; -fx-text-fill: white; -fx-padding: 1 4; -fx-min-width: 20px; -fx-min-height: 20px; -fx-background-radius: 10; -fx-border-radius: 10;"); // Delete button style
-            eliminarBtn.setOnAction(e -> {
-                this.tags.remove(tag); // Remove the tag from the set
-                refrescarLista(); // Redraw the list
-            });
-
-            tagItem.getChildren().addAll(tagLabel, eliminarBtn);
-            panelTags.getChildren().add(tagItem); // Add the HBox to the TilePane
+            HBox tagItem = crearTagItem(tag, true);
+            panelTags.getChildren().add(tagItem);
         }
     }
-
+    
     public Set<String> getTagsActuales() {
         return tags;
     }

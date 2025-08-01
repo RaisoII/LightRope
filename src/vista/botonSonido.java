@@ -46,7 +46,6 @@ public class botonSonido {
 	public void setRutaImagen(String rutaImagen)
 	{
 		this.rutaImagen = rutaImagen;
-		System.out.println("ruta: "+rutaImagen);
 	}	
 	
 	public String getRutaImagen() 
@@ -181,6 +180,12 @@ public class botonSonido {
 	{
 		if(!listaTags.contains(tag))
 			listaTags.add(tag);
+	}
+	
+	public void setListaTag(List<String> listaTags) 
+	{
+		System.out.println("listaTagsAsociada....");
+		this.listaTags = listaTags;
 	}
 	
 	public List<String> getTags()
