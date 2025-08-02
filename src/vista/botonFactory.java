@@ -97,20 +97,30 @@ public class botonFactory {
         Button botonFx = boton.getBotonAsociado();
         StackPane borde = boton.getBordeBoton();
 
+        // Define the base style with rounded corners
+        String baseStyle = "-fx-border-color: black; -fx-border-width: 2; -fx-background-color: transparent; -fx-border-radius: 10;";
+        
+        // Define the styles for different states, also with rounded corners
+        String pressedStyle = "-fx-border-color: yellow; -fx-border-width: 2; -fx-background-color: transparent; -fx-border-radius: 10;";
+        String focusedStyle = "-fx-border-color: green; -fx-border-width: 2; -fx-background-color: transparent; -fx-border-radius: 10;";
+        String hoveredStyle = "-fx-border-color: dodgerblue; -fx-border-width: 2; -fx-background-color: transparent; -fx-border-radius: 10;";
+
         Runnable aplicarEstilo = () -> {
             if (boton.getBotonApretado()) {
-                borde.setStyle("-fx-border-color: yellow; -fx-border-width: 2;");
+                borde.setStyle(pressedStyle);
             } else if (botonFx.isFocused()) {
-                borde.setStyle("-fx-border-color: green; -fx-border-width: 2;");
+                borde.setStyle(focusedStyle);
             } else if (botonFx.isHover()) {
-                borde.setStyle("-fx-border-color: dodgerblue; -fx-border-width: 2;");
+                borde.setStyle(hoveredStyle);
             } else {
-                borde.setStyle("-fx-border-color: black; -fx-border-width: 2;");
+                borde.setStyle(baseStyle);
             }
         };
 
         botonFx.hoverProperty().addListener((obs, o, n) -> aplicarEstilo.run());
         botonFx.focusedProperty().addListener((obs, o, n) -> aplicarEstilo.run());
+        
+        // Initial style application
         aplicarEstilo.run();
     }
 }

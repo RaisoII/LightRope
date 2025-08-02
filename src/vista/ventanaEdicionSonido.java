@@ -3,8 +3,10 @@ package vista;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import controlador.controlador;
 import interfacesObserver.interfaceReproductorListener;
@@ -371,11 +373,13 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	    flowPaneTagsDisponibles = new FlowPane(5, 5);
 	    flowPaneTagsDisponibles.setPadding(new Insets(10));
 	    flowPaneTagsDisponibles.setStyle("-fx-border-color: lightgray; -fx-border-width: 1; -fx-border-radius: 5;");
-
+	   
+	    tagsSeleccionados = botonAsociado.getTags();
+	    
 	    // Llenar el panel con todos los tags como CheckBoxes
 	    for (String tag : tagsDisponibles) {
 	        CheckBox checkBoxTag = new CheckBox(tag);
-	        // Si el tag ya está en la lista de seleccionados, marcarlo
+
 	        checkBoxTag.setSelected(tagsSeleccionados.contains(tag));
 	        
 	        checkBoxTag.setOnAction(e -> {
@@ -387,30 +391,28 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	            // Después de cada cambio, refrescamos la visualización
 	            refrescarVisualizacionTags();
 	        });
+	        
 	        flowPaneTagsDisponibles.getChildren().add(checkBoxTag);
 	    }
 	    
 	    // Al iniciar, refrescamos para mostrar los tags iniciales
 	    refrescarVisualizacionTags();
 	    
-	    botonAsociado.setListaTag(tagsSeleccionados);
+	    botonAsociado.setListaTagVentana(tagsSeleccionados);
 	    
 	    return new VBox(10, tituloSeleccionados, flowPaneTagsSeleccionados, tituloDisponibles, flowPaneTagsDisponibles);
 	}
 	
 	private void refrescarVisualizacionTags() {
 	    flowPaneTagsSeleccionados.getChildren().clear(); // Limpiamos para redibujar
-	    
+	   
 	    for (String tag : tagsSeleccionados) {
-	        // Usamos tu método existente para crear el HBox del tag
-	        // isDeletable = false porque la selección se hace con el CheckBox, no con un botón "X"
 	        HBox tagBox = crearTagItem(tag, false);
 	        flowPaneTagsSeleccionados.getChildren().add(tagBox);
 	    }
 	}
 	
 	
-	// Asegúrate de que este método esté dentro de tu clase ventanaEdicionSonido
 	private HBox crearTagItem(String tag, boolean isDeletable) {
 	    
 		HBox tagBox = new HBox(3);
@@ -453,5 +455,42 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	            }
 	        }
 	    }
+	}
+	
+	public void checkearTags(List<String> listaTagsNueva) {
+	    // Usamos un Set para búsquedas más eficientes (O(1) en lugar de O(n))
+	    Set<String> tagsValidos = new HashSet<>(listaTagsNueva);
+	    
+	    // --- PASO 1: Actualizar los tags seleccionados ---
+	    // Eliminar de 'tagsSeleccionados' cualquier tag que ya no esté en la nueva lista de tags válidos
+	    tagsSeleccionados.removeIf(tag -> !tagsValidos.contains(tag));
+	    
+	    // --- PASO 2: Reconstruir el panel de tags disponibles ---
+	    // Esto es más robusto que intentar eliminar nodos individualmente
+	    flowPaneTagsDisponibles.getChildren().clear();
+	    
+	    // Recorrer la nueva lista de tags válidos y crear los CheckBoxes
+	    for (String tag : listaTagsNueva) {
+	        CheckBox checkBoxTag = new CheckBox(tag);
+
+	        // Marcar el CheckBox si el tag estaba previamente seleccionado
+	        checkBoxTag.setSelected(tagsSeleccionados.contains(tag));
+	        
+	        checkBoxTag.setOnAction(e -> {
+	            if (checkBoxTag.isSelected()) {
+	                tagsSeleccionados.add(tag);
+	            } else {
+	                tagsSeleccionados.remove(tag);
+	            }
+	            refrescarVisualizacionTags();
+	        });
+	        
+	        flowPaneTagsDisponibles.getChildren().add(checkBoxTag);
+	    }
+	    
+	    // --- PASO 3: Refrescar la visualización de los tags seleccionados ---
+	    // Esto es importante para que el panel de tags seleccionados también se actualice
+	    // si se eliminó algún tag del paso 1.
+	    refrescarVisualizacionTags();
 	}
 }

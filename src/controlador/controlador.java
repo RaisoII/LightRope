@@ -116,11 +116,11 @@ public class controlador {
             vista.setFadeIn(idBotonEstatico, datos.getFadeIn());
             vista.setFadeOut(idBotonEstatico, datos.getFadeOut());
             vista.setLoop(idBotonEstatico, datos.getLoop());
+            vista.setTagsBoton(idBotonEstatico, datos.getTags());
             
             idBoton++;
         }
 	}
-	
 	
 	
 	private void seleccionarArchivos() {
@@ -147,7 +147,7 @@ public class controlador {
 	    }
 		else {
 	         duracion = duracionWAV(ruta);
-	        vista.agregarBoton(ruta, nombreCancion,idBotonEstatico, duracion, e -> manejarReproduccion(ruta, idBotonEstatico));
+	         vista.agregarBoton(ruta, nombreCancion,idBotonEstatico, duracion, e -> manejarReproduccion(ruta, idBotonEstatico));
 	    }
 		
 		idBoton++;

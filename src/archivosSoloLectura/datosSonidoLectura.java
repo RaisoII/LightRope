@@ -83,6 +83,11 @@ public class datosSonidoLectura {
 			listaTags.add(tag);
 	}
 	
+	public void setListaTags(List<String> tags) 
+	{
+		listaTags = tags;
+	}
+	
 	public List<String> getTags()
 	{
 		return listaTags;

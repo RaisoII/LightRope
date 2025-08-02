@@ -39,19 +39,22 @@ public class XMLManager {
 
                 Element rutaArchivo = doc.createElement("rutaArchivo");
                 rutaArchivo.setTextContent(datos.getRutaArchivoAudio());
-
+                
                 Element elementoRutaImagen = doc.createElement("rutaImagen");
-            
+                
                 String rutaImagen = datos.getRutaImagen();
-                System.out.println("ruta imagen: "+rutaImagen);
                 
                 if (rutaImagen != null)
                 	elementoRutaImagen.setTextContent(rutaImagen);
                  else 
                 	elementoRutaImagen.setTextContent("");
                 
+                Element tags = doc.createElement("tags");
+                List<String> listaTags = datos.getTags();
                 
-                
+                String tagsComoTexto = String.join(",", listaTags);
+                tags.setTextContent(tagsComoTexto);
+
                 Element volumen = doc.createElement("volumen");
                 volumen.setTextContent(String.valueOf(datos.getVolumen()));
                 
@@ -70,12 +73,13 @@ public class XMLManager {
                 sonido.appendChild(nombre);
                 sonido.appendChild(rutaArchivo);
                 sonido.appendChild(elementoRutaImagen);
+                sonido.appendChild(tags);
                 sonido.appendChild(volumen);
                 sonido.appendChild(duracion);
                 sonido.appendChild(loop);
                 sonido.appendChild(fadeIn);
                 sonido.appendChild(fadeOut);
-                
+
                 rootElement.appendChild(sonido);
             }
 
@@ -118,10 +122,19 @@ public class XMLManager {
                 boolean loop = Boolean.parseBoolean(elemSonido.getElementsByTagName("loop").item(0).getTextContent());
                 float fadeIn = Float.parseFloat(elemSonido.getElementsByTagName("fadeIn").item(0).getTextContent());
                 float fadeOut = Float.parseFloat(elemSonido.getElementsByTagName("fadeOut").item(0).getTextContent());
-          
+                String tagsConcatenados = elemSonido.getElementsByTagName("tags").item(0).getTextContent();
+                List<String> listaTags;
+                
+                if (tagsConcatenados == null || tagsConcatenados.isEmpty()) {
+                     listaTags = List.of(); // lista vacía inmutable
+                }
+                else
+                	listaTags = List.of(tagsConcatenados.split(","));
+            	
                 datosSonidoLectura datos = new datosSonidoLectura(rutaArchivo,nombre,i,
                 													volumen,duracion,fadeIn,fadeOut,loop);
                 datos.setRutaImagen(rutaImagen);
+                datos.setListaTags(listaTags);
                 datosCargados.add(datos);
             }
 

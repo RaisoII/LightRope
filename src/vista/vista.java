@@ -21,6 +21,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -100,7 +101,11 @@ public class vista implements interfaceReproductorListener{
         botonLimpiarTags.setOnAction(e -> limpiarTags());
 
         // Botón "MÁS" para abrir/cerrar el popup de tags
-        botonFiltrarTag = new Button("MÁS");
+        botonFiltrarTag = new Button();
+        botonFiltrarTag.setGraphic(crearIconoTags()); // Usamos la nueva función
+        botonFiltrarTag.setTooltip(new Tooltip("Filtrar por tags"));
+        botonFiltrarTag.setPadding(new Insets(5)); // Ajusta el padding para que se vea bien
+
         botonFiltrarTag.setOnAction(e -> {
             if (popupTags == null || !popupTags.isShowing()) {
                 filtrarTags(botonFiltrarTag);
@@ -144,6 +149,26 @@ public class vista implements interfaceReproductorListener{
         VBox.setVgrow(borderPane, Priority.ALWAYS);
         
         Platform.runLater(() -> root.requestFocus());
+    }
+    
+    private VBox crearIconoTags() {
+        VBox iconoHamburguesa = new VBox(2); // Espacio entre las rayas
+        iconoHamburguesa.setAlignment(Pos.CENTER);
+
+        Region rayaSuperior = new Region();
+        rayaSuperior.setPrefSize(18,2);
+        rayaSuperior.setStyle("-fx-background-color: #333; -fx-background-radius: 1;");
+
+        Region rayaMedia = new Region();
+        rayaMedia.setPrefSize(18,2);
+        rayaMedia.setStyle("-fx-background-color: #333; -fx-background-radius: 1;");
+
+        Region rayaInferior = new Region();
+        rayaInferior.setPrefSize(18,2); // Esta es la raya más corta
+        rayaInferior.setStyle("-fx-background-color: #333; -fx-background-radius: 1;");
+
+        iconoHamburguesa.getChildren().addAll(rayaSuperior, rayaMedia, rayaInferior);
+        return iconoHamburguesa;
     }
     
     //llamados desde el controlador
@@ -235,10 +260,6 @@ public class vista implements interfaceReproductorListener{
     // --- Métodos de ayuda ---
 
     private void agregarTagABarra(String tag) {
-        // CAMBIO: En lugar de eliminarlo, lo ocultamos
-        barraBusqueda.setVisible(false);
-        barraBusqueda.setManaged(false);
-        
         // Si el tag ya existe, no hacemos nada
         if (filtroTagsContainer.getChildren().stream().anyMatch(node -> {
             if (node instanceof HBox) {
@@ -249,13 +270,15 @@ public class vista implements interfaceReproductorListener{
             return;
         }
 
-        // Crear el botón de tag con su 'x' para eliminar
         HBox tagNode = crearBotonTag(tag);
-        filtroTagsContainer.getChildren().add(filtroTagsContainer.getChildren().size(), tagNode); // Agregamos al final
+
+        // CAMBIO CLAVE: Agregamos el tag en la posición 0
+        filtroTagsContainer.getChildren().add(0, tagNode);
         
-        // Actualizar el filtrado de botones en el panel principal
+        // Llamamos a este método para que la UI se actualice correctamente
         filtrarBotones();
     }
+    
     
     private void eliminarTagDeBarra(String tag) {
         filtroTagsContainer.getChildren().removeIf(node -> {
@@ -265,13 +288,9 @@ public class vista implements interfaceReproductorListener{
             return false;
         });
 
-        // CAMBIO: Si no quedan tags, hacemos la barra de búsqueda visible de nuevo
-        if (filtroTagsContainer.getChildren().isEmpty()) {
-            barraBusqueda.setVisible(true);
-            barraBusqueda.setManaged(true);
-        }
-        
-        // Actualizar el filtrado de botones
+        // ¡Esta línea es la clave!
+        // Al llamar a filtrarBotones(), el método se encargará de
+        // actualizar el estado de la UI, incluyendo la barra de búsqueda.
         filtrarBotones();
     }
     
@@ -330,23 +349,19 @@ public class vista implements interfaceReproductorListener{
         panelBotones.getChildren().clear();
         Set<String> tagsBuscadosSet = obtenerTagsDeBarra();
         String textoBusqueda = barraBusqueda.getText().toLowerCase().trim();
-        
+
         boolean hayTags = !tagsBuscadosSet.isEmpty();
         boolean hayTextoEnBarra = !textoBusqueda.isEmpty();
 
-        // Control del botón "MÁS"
         botonFiltrarTag.setDisable(hayTextoEnBarra);
-        
-        // La barra de búsqueda (TextField) se deshabilita si hay tags
+
         barraBusqueda.setDisable(hayTags);
-        
-        // --- NUEVO: Control de la visibilidad del botón de limpiar ---
+        barraBusqueda.setPromptText(hayTags ? "" : "Find Sound...");
+
         botonLimpiarTags.setVisible(hayTags);
         botonLimpiarTags.setManaged(hayTags);
-        // --- FIN NUEVO CONTROL ---
 
-
-        // Lógica de Filtrado de botones (sin cambios)
+        // Lógica de Filtrado de botones
         if (hayTags) {
             // Filtrar por tags
             for (botonSonido boton : mapaBotonesSonido.values()) {
@@ -394,11 +409,57 @@ public class vista implements interfaceReproductorListener{
     }    
     
     private void abrirVentanaTags() {
-        ventanaTags vt = new ventanaTags(tagsGlobales);
+
+    	ventanaTags vt = new ventanaTags(tagsGlobales);
         vt.showAndWait();
-        tagsGlobales = vt.getTagsActuales(); // actualiza global
-        List<String> listaTags = new ArrayList<String>(tagsGlobales);
+        Set<String> tagsGlobalesAuxiliares = vt.getTagsActuales();
+
+        refrescarTagsVentanas(tagsGlobalesAuxiliares);
+    }
+    
+    private void refrescarTagsVentanas(Set<String> tagsGlobalesAuxiliares) 
+    { 
+        // BARRA DE BUSQUEDA
+    	Set<String> tagsEnBarra = obtenerTagsDeBarra();
+
+        if (!tagsEnBarra.isEmpty())
+        {
+        	  Set<String> tagsAEliminar = new HashSet<>();
+              
+              for (String tag : tagsEnBarra)
+              {
+                  if (!tagsGlobalesAuxiliares.contains(tag.toLowerCase())) {
+                      tagsAEliminar.add(tag);
+                  }
+              }
+              
+              for (String tag : tagsAEliminar)
+            	  eliminarTagDeBarra(tag);
+              
+              if(tagsAEliminar.size()  > 0)
+            	  filtrarBotones();
+        }
+        
+
+        tagsGlobales = tagsGlobalesAuxiliares;
+        List<String> listaTags = new ArrayList<>(tagsGlobales);
         controlador.guardarTags(listaTags);
+        
+        //VENTANAS SONIDO Y BOTONES
+        for(botonSonido boton : mapaBotonesSonido.values()) 
+        {
+        	Stage ventana =  boton.getVentanaEdicion();
+        	
+        	if(ventana == null) 
+        	{
+        		boton.checkearTags(listaTags);
+        	}
+        	else 
+        	{
+            	ventanaEdicionSonido  ventanaSonido = (ventanaEdicionSonido)ventana;
+            	ventanaSonido.checkearTags(listaTags);
+        	}
+        }
     }
     
     public String seleccionarArchivoXML() {
@@ -435,24 +496,37 @@ public void seleccionarImagenParaBoton(int idBoton) {
         
     }
 
-	private void setearImagenBoton(int idBoton,String ruta) 
-	{
-         Image imagen = new Image(ruta);
-         ImageView imageView = new ImageView(imagen);
-
-         botonSonido boton = mapaBotonesSonido.get(idBoton);
-         Button botonFx = boton.getBotonAsociado();
-
-         imageView.setPreserveRatio(false);
-         imageView.setFitWidth(botonFx.getPrefWidth());
-         imageView.setFitHeight(botonFx.getPrefHeight());
-
-         StackPane contenedor = boton.getBordeBoton();
-         contenedor.getChildren().setAll(imageView, botonFx); // Imagen de fondo, botón encima
-         botonFx.toFront(); // Asegura que el botón sea interactivo
-
-         boton.setRutaImagen(ruta);
-
+	private void setearImagenBoton(int idBoton, String ruta) {
+	    Image imagen = new Image(ruta);
+	    ImageView imageView = new ImageView(imagen);
+	
+	    botonSonido boton = mapaBotonesSonido.get(idBoton);
+	    Button botonFx = boton.getBotonAsociado();
+	    StackPane contenedor = boton.getBordeBoton();
+	
+	    // Set image size to fit the button container
+	    imageView.setPreserveRatio(false);
+	    imageView.setFitWidth(contenedor.getPrefWidth());
+	    imageView.setFitHeight(contenedor.getPrefHeight());
+	
+	    // Create a rounded rectangle for clipping the image
+	    Rectangle clip = new Rectangle();
+	    clip.setWidth(contenedor.getPrefWidth());
+	    clip.setHeight(contenedor.getPrefHeight());
+	    
+	    // Set the corner radius to match the border-radius of the StackPane
+	    // This value should be the same as the one used in your CSS or inline styles for the border-radius.
+	    clip.setArcWidth(20); // Adjust this value as needed
+	    clip.setArcHeight(20); // Adjust this value as needed
+	
+	    // Apply the clip to the ImageView
+	    imageView.setClip(clip);
+	
+	    // Add the image and the button to the StackPane
+	    contenedor.getChildren().setAll(imageView, botonFx);
+	    botonFx.toFront(); // Ensure the button remains clickable
+	
+	    boton.setRutaImagen(ruta);
 	}
     
     // llamado desde el controlador
@@ -517,23 +591,27 @@ public void seleccionarImagenParaBoton(int idBoton) {
         }
     }
 	
-	public void colorearBotonReproduccion(int idBoton, boolean reproduciendo)
-	{
-	 
-		botonSonido botonSonido = mapaBotonesSonido.get(idBoton);
-	    // Button boton = botonSonido.getBotonAsociado(); // Ya no necesitamos interactuar directamente con el botón para el estilo amarillo
+	public void colorearBotonReproduccion(int idBoton, boolean reproduciendo) {
+	    botonSonido botonSonido = mapaBotonesSonido.get(idBoton);
+	    StackPane borde = botonSonido.getBordeBoton();
 
-	    botonSonido.setBotonApretado(reproduciendo); // Actualiza el estado de reproducción
+	    // Actualiza el estado de reproducción del objeto botonSonido
+	    botonSonido.setBotonApretado(reproduciendo);
 
-	    if (botonSonido.getBotonApretado()) 
-            botonSonido.getBordeBoton().setStyle("-fx-border-color: yellow; -fx-border-width: 2;");
-         else if (botonSonido.getBotonAsociado().isFocused()) 
-            botonSonido.getBordeBoton().setStyle("-fx-border-color: green; -fx-border-width: 2;");
-         else if (botonSonido.getBotonAsociado().isHover()) 
-            botonSonido.getBordeBoton().setStyle("-fx-border-color: dodgerblue; -fx-border-width: 2;");
-         else 
-            botonSonido.getBordeBoton().setStyle("-fx-border-color: black; -fx-border-width: 2;");
-        
+	    // Define el valor de border-radius una sola vez para mantener la consistencia
+	    // Asegúrate de que este valor coincida con el que usas en 'configurarListenersEstilo'
+	    String bordeRedondeado = "-fx-border-radius: 10;"; // O el valor que estés usando
+
+	    // Aplica el estilo completo, incluyendo el borde redondeado
+	    if (botonSonido.getBotonApretado()) {
+	        borde.setStyle("-fx-border-color: yellow; -fx-border-width: 2;" + bordeRedondeado);
+	    } else if (botonSonido.getBotonAsociado().isFocused()) {
+	        borde.setStyle("-fx-border-color: green; -fx-border-width: 2;" + bordeRedondeado);
+	    } else if (botonSonido.getBotonAsociado().isHover()) {
+	        borde.setStyle("-fx-border-color: dodgerblue; -fx-border-width: 2;" + bordeRedondeado);
+	    } else {
+	        borde.setStyle("-fx-border-color: black; -fx-border-width: 2;" + bordeRedondeado);
+	    }
 	}
 	
 	 public datosSonidoLectura getDatosSonido(int idBoton) 
@@ -557,14 +635,20 @@ public void seleccionarImagenParaBoton(int idBoton) {
     //eventos
 
 	@Override
-	public void onReproduccionTerminada(int idBoton) {
-	    botonSonido boton = mapaBotonesSonido.get(idBoton); 
+	public void onReproduccionTerminada(int idBoton)
+	{
+	    botonSonido boton = mapaBotonesSonido.get(idBoton);
 	    Button botonFx = boton.getBotonAsociado();
+	    StackPane borde = boton.getBordeBoton();
+
+	    // Define el valor de border-radius para no repetirlo
+	    // Asegúrate de que este valor coincida con el de tus otros métodos
+	    String bordeRedondeado = "-fx-border-radius: 10;"; 
 
 	    if (botonFx.isFocused()) {
-	        boton.getBordeBoton().setStyle("-fx-border-color: green; -fx-border-width: 2;");
+	        borde.setStyle("-fx-border-color: green; -fx-border-width: 2;" + bordeRedondeado);
 	    } else {
-	        boton.getBordeBoton().setStyle("-fx-border-color: black; -fx-border-width: 2;");
+	        borde.setStyle("-fx-border-color: black; -fx-border-width: 2;" + bordeRedondeado);
 	    }
 
 	    boton.setBotonApretado(false);
@@ -632,6 +716,13 @@ public void seleccionarImagenParaBoton(int idBoton) {
     public void setTagsGlobales(List<String> listaTags) 
     {
     	tagsGlobales = new HashSet<>(listaTags);
+    }
+    
+    public void setTagsBoton(int idBoton,List<String> listaTags) 
+    {
+    	List<String> listaMutable = new ArrayList<>(listaTags);
+    	botonSonido boton =  mapaBotonesSonido.get(idBoton);
+    	boton.setListaTagInicial(listaMutable,tagsGlobales);
     }
 
 	@Override

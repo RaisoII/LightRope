@@ -2,6 +2,7 @@ package vista;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import archivosSoloLectura.datosSonidoLectura;
 import javafx.scene.control.Button;
@@ -176,16 +177,17 @@ public class botonSonido {
 		return bordeBoton;
 	}
 	
-	public void setTag(String tag) 
+	public void setListaTagVentana(List<String> listaTags) 
 	{
-		if(!listaTags.contains(tag))
-			listaTags.add(tag);
+		this.listaTags = listaTags;
 	}
 	
-	public void setListaTag(List<String> listaTags) 
+
+	public void setListaTagInicial(List<String> listaTags,Set<String> tagsGlobales) 
 	{
-		System.out.println("listaTagsAsociada....");
 		this.listaTags = listaTags;
+		List<String> listaTagsGlobales = new ArrayList<>(tagsGlobales);
+		checkearTags(listaTagsGlobales);
 	}
 	
 	public List<String> getTags()
@@ -195,13 +197,31 @@ public class botonSonido {
 	
 
 	 // Método para obtener una versión de solo lectura
-    public datosSonidoLectura getDatosLectura() {
+    public datosSonidoLectura getDatosLectura()
+    {
 
     	datosSonidoLectura datos = new datosSonidoLectura(rutaArchivoAudio, nombreArchivo,idBoton,
 				volumen,duracion,fadeIn,fadeOut, loop);
     	
     	datos.setRutaImagen(rutaImagen);
+    	datos.setListaTags(listaTags);
     	
     	return datos;
+    }
+    
+    public void checkearTags(List<String> listaTagsNueva) 
+    {
+    	List<String> listaBorrar = new ArrayList<String>(); 
+    	
+    	for(String tag : listaTags) 
+    	{
+    		if(!listaTagsNueva.contains(tag))
+    			listaBorrar.add(tag);
+    	}
+    	
+    	for(String tag : listaBorrar) 
+    	{
+    		listaTags.remove(tag);
+    	}
     }
 }
