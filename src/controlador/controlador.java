@@ -34,6 +34,7 @@ public class controlador {
 		setearListenersVista();
 		setearListenerSave();
 		setearListenerLoad();
+		setearListenerImport();
 		cargarArchivosUltimaRuta();
 		cargarTags();
 	}
@@ -61,6 +62,22 @@ public class controlador {
 		
 		vista.agregarListenerMenuItemLoad(e -> {
 		    String ruta = vista.seleccionarArchivoXML(); // este método está en vista
+		    if (ruta != null) 
+		    {
+		    	idBoton = 0;
+				vista.borrarTodosLosBotones();
+		    	crearBotonesCarga(ruta);
+		    	config.setUltimaRutaXML(ruta);
+		    }
+		});
+	}
+	
+	private void setearListenerImport() 
+	{
+		ConfigManager config = new ConfigManager();
+		
+		vista.agregarListenerMenuItemImport(e ->{
+			String ruta = vista.seleccionarArchivoXML(); // este método está en vista
 		    if (ruta != null) 
 		    {
 		    	idBoton = 0;

@@ -20,6 +20,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
@@ -39,7 +40,7 @@ public class vista implements interfaceReproductorListener{
     // Elementos de la interfaz
 	private VBox root;
     private FileChooser buscadorArchivos;
-    private MenuItem openItem,saveItem,loadItem;
+    private MenuItem openItem,saveItem,loadItem,importItem;
     private TilePane  panelBotones;
     private TextField barraBusqueda;
     private Button botonFiltrarTag;
@@ -61,11 +62,12 @@ public class vista implements interfaceReproductorListener{
     private void crearInterface() {
         // Crear menú
         Menu fileMenu = new Menu("File");
-        openItem = new MenuItem("Open");
-        saveItem = new MenuItem("Save");
-        loadItem = new MenuItem("Load");
+        openItem = new MenuItem("Open Audio File");
+        saveItem = new MenuItem("Save Changes");
+        loadItem = new MenuItem("Load XML Project");
+        importItem = new MenuItem("Import Resources");
         saveItem.setDisable(true);
-        fileMenu.getItems().addAll(openItem, saveItem, loadItem);
+        fileMenu.getItems().addAll(openItem, saveItem, loadItem,importItem);
         menuBar.getMenus().add(fileMenu);
 
         // Layout principal con BorderPane
@@ -100,7 +102,7 @@ public class vista implements interfaceReproductorListener{
         botonLimpiarTags.setManaged(false); // No ocupa espacio
         botonLimpiarTags.setOnAction(e -> limpiarTags());
 
-        // Botón "MÁS" para abrir/cerrar el popup de tags
+        // Botón para abrir/cerrar el popup de tags
         botonFiltrarTag = new Button();
         botonFiltrarTag.setGraphic(crearIconoTags()); // Usamos la nueva función
         botonFiltrarTag.setTooltip(new Tooltip("Filtrar por tags"));
@@ -187,6 +189,11 @@ public class vista implements interfaceReproductorListener{
     	loadItem.setOnAction(handler);
     }
     
+    public void agregarListenerMenuItemImport(EventHandler<ActionEvent> handler) 
+    {
+    	importItem.setOnAction(handler);
+    }
+    
     private void filtrarTags(Button botonQueAbre) {
         // 1. Asegurarse de que el Popup y el contenedor de tags existan
         if (popupTags == null) {
@@ -196,11 +203,26 @@ public class vista implements interfaceReproductorListener{
             popupLayout.setStyle("-fx-background-color: white; -fx-border-color: gray; -fx-border-width: 1; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
 
             tagsContainer = new FlowPane(5, 5);
-            tagsContainer.setPrefWrapLength(200); // Esto ayuda a que el popup no sea excesivamente ancho
+            tagsContainer.setPrefWrapLength(200);
 
             popupLayout.getChildren().add(tagsContainer);
             popupTags.getContent().add(popupLayout);
-            popupTags.setAutoHide(true);
+
+            // --- CAMBIO CLAVE: Desactivar el cierre automático del popup ---
+            popupTags.setAutoHide(false);
+            
+            // --- NUEVA LÓGICA: Añadir un filtro de eventos a la escena para detectar clics fuera del popup ---
+            // Esto permite que los clics en otros botones "pasen" y se ejecuten
+            root.getScene().addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+                Node target = (Node) event.getTarget();
+                
+                // Verificar si el clic fue en un nodo fuera del popup
+                if (popupTags.isShowing() && !popupTags.getContent().get(0).getBoundsInParent().contains(target.getBoundsInParent())) {
+                    // Cerramos el popup manualmente
+                    popupTags.hide();
+                }
+            });
+            
             popupTags.setOnHidden(e -> barraBusqueda.setEditable(true));
         }
 
@@ -210,11 +232,9 @@ public class vista implements interfaceReproductorListener{
 
         for (String tag : tagsGlobales) {
             Button tagButton = crearBotonPopupTag(tag);
-
             if (tagsEnBarra.contains(tag.toLowerCase())) {
                 tagButton.getStyleClass().add("tag-seleccionado");
             }
-
             tagButton.setOnAction(e -> {
                 if (tagButton.getStyleClass().contains("tag-seleccionado")) {
                     tagButton.getStyleClass().remove("tag-seleccionado");
@@ -227,26 +247,27 @@ public class vista implements interfaceReproductorListener{
             tagsContainer.getChildren().add(tagButton);
         }
         
-        // --- Lógica CLAVE: Posicionar y mostrar el Popup de forma dinámica ---
-        // 3. Ocultar si ya está abierto
+        // Ocultar si ya está abierto
         if (popupTags.isShowing()) {
             popupTags.hide();
+            return;
         }
 
-        // 4. Calcular la posición
+        // Calcular la posición y centrar el popup
         double buttonScreenX = botonQueAbre.localToScreen(0, 0).getX();
         double buttonScreenY = botonQueAbre.localToScreen(0, 0).getY();
+        double buttonWidth = botonQueAbre.getWidth();
         double buttonHeight = botonQueAbre.getHeight();
 
-        // Se posiciona el popup justo debajo del botón.
-        // Esto es más simple y predecible que intentar centrarlo en X.
-        double popupX = buttonScreenX;
-        double popupY = buttonScreenY + buttonHeight + 5; // +5 para un pequeño margen
+        popupTags.getContent().get(0).applyCss();
+        double popupWidth = popupTags.getContent().get(0).prefWidth(-1);
 
-        // 5. Mostrar el popup en la posición calculada
+        double popupX = buttonScreenX + (buttonWidth / 2) - (popupWidth / 2);
+        double popupY = buttonScreenY + buttonHeight + 5;
+
+        // Mostrar el popup en la posición calculada
         popupTags.show(botonQueAbre, popupX, popupY);
         barraBusqueda.setEditable(false);
-        // --- FIN Lógica de Posicionamiento ---
     }    
     
     private Button crearBotonPopupTag(String tag) {
@@ -346,7 +367,8 @@ public class vista implements interfaceReproductorListener{
     // private Button botonFiltrarTag;
 
     private void filtrarBotones() {
-        panelBotones.getChildren().clear();
+        
+    	panelBotones.getChildren().clear();
         Set<String> tagsBuscadosSet = obtenerTagsDeBarra();
         String textoBusqueda = barraBusqueda.getText().toLowerCase().trim();
 
@@ -385,10 +407,22 @@ public class vista implements interfaceReproductorListener{
                 panelBotones.getChildren().add(boton.getContenedor());
             }
         }
-    }
-    
+
+        // --- NUEVA LÓGICA: Mostrar mensaje si no hay botones ---
+        if (panelBotones.getChildren().isEmpty()) {
+            Label noResultsLabel = new Label("No result Found.");
+            noResultsLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: gray;");
+            
+            // Para centrar el mensaje en el panel, se puede usar un StackPane
+            StackPane mensajeContenedor = new StackPane(noResultsLabel);
+            mensajeContenedor.setPrefSize(panelBotones.getPrefWidth(), panelBotones.getPrefHeight());
+            
+            panelBotones.getChildren().add(mensajeContenedor);
+        }
+    }    
     private void limpiarTags() {
-        filtroTagsContainer.getChildren().clear();
+        
+    	filtroTagsContainer.getChildren().clear();
         filtroTagsContainer.getChildren().add(barraBusqueda);
         barraBusqueda.setText("");
         
@@ -408,8 +442,14 @@ public class vista implements interfaceReproductorListener{
         }
     }    
     
-    private void abrirVentanaTags() {
-
+    private void abrirVentanaTags()
+    {
+    	
+    	if(popupTags != null) 
+    	{
+    		popupTags.hide();
+    	}
+    	
     	ventanaTags vt = new ventanaTags(tagsGlobales);
         vt.showAndWait();
         Set<String> tagsGlobalesAuxiliares = vt.getTagsActuales();
@@ -530,14 +570,27 @@ public void seleccionarImagenParaBoton(int idBoton) {
 	}
     
     // llamado desde el controlador
-    public String[] seleccionarArchivos() {
-        // Abre un diálogo para seleccionar archivos
-        List<File> archivos = buscadorArchivos.showOpenMultipleDialog(null);
-        if (archivos != null) {
-            return archivos.stream().map(File::getAbsolutePath).toArray(String[]::new);
-        }
-        return null;
-    }
+	// En tu clase 'vista'
+	public String[] seleccionarArchivos() {
+	    // 1. Configurar el FileChooser
+	    buscadorArchivos = new FileChooser(); // Asumimos que buscadorArchivos es un atributo de la clase
+	    buscadorArchivos.setTitle("Seleccionar Archivos de Sonido");
+
+	    // --- CAMBIO CLAVE: Agregar el filtro de extensiones ---
+	    FileChooser.ExtensionFilter filtroAudio =
+	        new FileChooser.ExtensionFilter("Archivos de Audio (.mp3, .wav)", "*.mp3", "*.wav");
+	    
+	    buscadorArchivos.getExtensionFilters().add(filtroAudio);
+	    
+	    // 2. Abrir el diálogo y obtener la lista de archivos
+	    List<File> archivos = buscadorArchivos.showOpenMultipleDialog(null);
+
+	    // 3. Procesar los archivos seleccionados y devolver las rutas
+	    if (archivos != null) {
+	        return archivos.stream().map(File::getAbsolutePath).toArray(String[]::new);
+	    }
+	    return null;
+	}
 
     // llamado desde el controlador
     
