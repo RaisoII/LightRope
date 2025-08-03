@@ -152,6 +152,7 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     
     private void configurarCierreVentana() {
     	setOnCloseRequest(e ->{ 
+    		 botonAsociado.setListaTagVentana(new ArrayList<>(tagsSeleccionados));
     		botonAsociado.setVentanaEdicion(null);
     	});
     }
@@ -407,54 +408,43 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	    flowPaneTagsSeleccionados.getChildren().clear(); // Limpiamos para redibujar
 	   
 	    for (String tag : tagsSeleccionados) {
-	        HBox tagBox = crearTagItem(tag, false);
+	    	boolean isTagGlobal = tagsDisponibles.contains(tag);
+	        HBox tagBox = crearTagItem(tag, isTagGlobal);
 	        flowPaneTagsSeleccionados.getChildren().add(tagBox);
 	    }
 	}
 	
 	
-	private HBox crearTagItem(String tag, boolean isDeletable) {
+	private HBox crearTagItem(String tag, boolean isTagGlobal) {
 	    
 		HBox tagBox = new HBox(3);
 	    tagBox.setAlignment(Pos.CENTER_LEFT);
-	    tagBox.setStyle("-fx-background-color: #3870b2; -fx-background-radius: 3; -fx-padding: 3 5 3 5;");
 	    
+	    String colorFondo = isTagGlobal ? "#3870b2" : "#bbbbbb";  // azul o gris claro
+
+	    tagBox.setStyle("-fx-background-color: " + colorFondo + 
+                "; -fx-background-radius: 3; -fx-padding: 3 5 3 5;");
+
 	    Label tagLabel = new Label(tag);
 	    tagLabel.setStyle("-fx-text-fill: white; -fx-font-size: 11px;");
 	    
 	    tagBox.getChildren().add(tagLabel);
 	    
-	    if (isDeletable) {
+	    if (!isTagGlobal) {
 	        Button closeButton = new Button("✕");
 	        closeButton.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-padding: 0; -fx-font-size: 8px;");
 	        
 	        closeButton.setOnAction(e -> {
 	            // El cambio clave está aquí: eliminamos de la lista de seleccionados
 	            this.tagsSeleccionados.remove(tag);
-	            
-	            // Y luego actualizamos ambas visualizaciones
+	            botonAsociado.borrarTagBoton(tag);
 	            refrescarVisualizacionTags();
-	            // También tenemos que desmarcar el CheckBox en la lista de disponibles
-	            actualizarCheckBox(tag, false);
 	        });
 	        
 	        tagBox.getChildren().add(closeButton);
 	    }
 	    
 	    return tagBox;
-	}
-
-	// Este es un nuevo método auxiliar para desmarcar el CheckBox
-	private void actualizarCheckBox(String tag, boolean isSelected) {
-	    for (Node node : flowPaneTagsDisponibles.getChildren()) {
-	        if (node instanceof CheckBox) {
-	            CheckBox cb = (CheckBox) node;
-	            if (cb.getText().equals(tag)) {
-	                cb.setSelected(isSelected);
-	                break;
-	            }
-	        }
-	    }
 	}
 	
 	public void checkearTags(List<String> listaTagsNueva) {

@@ -1,7 +1,10 @@
 package vista;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import archivosSoloLectura.datosSonidoLectura;
@@ -16,8 +19,8 @@ public class botonSonido {
 	private String rutaArchivoAudio;
 	private String nombreArchivo;
 	private String rutaImagen;
-	private List<String> listaTags;
-	private Button botonInterfaceAsociado;
+	private Map<String, Boolean> mapaTags;
+	private	Button botonInterfaceAsociado;
 	private double duracion;
 	private Stage ventanaEdicion;  // Ventana asociada al botón
 	private int idBoton;
@@ -32,7 +35,7 @@ public class botonSonido {
 	public botonSonido(String ruta,String nombreArchivo,int idBoton, double duracion, 
 						Button botonAsociado, Label labelNombre) 
 	{
-		listaTags = new ArrayList<String>();
+		mapaTags = new LinkedHashMap<>();
 		this.labelNombre = labelNombre;
 		this.duracion = duracion; 
 		this.nombreArchivo = nombreArchivo;
@@ -179,49 +182,71 @@ public class botonSonido {
 	
 	public void setListaTagVentana(List<String> listaTags) 
 	{
-		this.listaTags = listaTags;
+	    for (String tag : listaTags) {
+	        mapaTags.put(tag, true); // Si ya estaba → se reactiva. Si no, se agrega como true.
+	    }
 	}
 	
-
-	public void setListaTagInicial(List<String> listaTags,Set<String> tagsGlobales) 
+	// idea general: cargo los tags de los botones.
+	// si quedan en true significa que están en uso y son tagsGlobales
+	// si quedan en false significa que si son tags del boton pero no están en los tagsGlobales
+	public void setListaTagInicial(List<String> tagsBoton,Set<String> tagsGlobales)
 	{
-		this.listaTags = listaTags;
+		for(String tag : tagsBoton) 
+		{
+			mapaTags.put(tag, true);
+		}
+		
 		List<String> listaTagsGlobales = new ArrayList<>(tagsGlobales);
+		
 		checkearTags(listaTagsGlobales);
+		
 	}
 	
-	public List<String> getTags()
+	public List<String> getTags() 
 	{
+	    
+	    return getListaTags();
+	}
+	
+	private List<String> getListaTags()
+	{
+		List<String> listaTags = new ArrayList<>();
+	    
+		for (Map.Entry<String, Boolean> entry : mapaTags.entrySet()) {
+	        if (Boolean.TRUE.equals(entry.getValue())) 
+	        {
+	            listaTags.add(entry.getKey());
+	        }
+	    }
+		
 		return listaTags;
 	}
-	
 
 	 // Método para obtener una versión de solo lectura
     public datosSonidoLectura getDatosLectura()
     {
-
     	datosSonidoLectura datos = new datosSonidoLectura(rutaArchivoAudio, nombreArchivo,idBoton,
 				volumen,duracion,fadeIn,fadeOut, loop);
     	
     	datos.setRutaImagen(rutaImagen);
+    	List<String> listaTags = getListaTags();
+    	
     	datos.setListaTags(listaTags);
     	
     	return datos;
     }
     
-    public void checkearTags(List<String> listaTagsNueva) 
+    public void checkearTags(List<String> tagsGlobales) 
     {
-    	List<String> listaBorrar = new ArrayList<String>(); 
-    	
-    	for(String tag : listaTags) 
-    	{
-    		if(!listaTagsNueva.contains(tag))
-    			listaBorrar.add(tag);
-    	}
-    	
-    	for(String tag : listaBorrar) 
-    	{
-    		listaTags.remove(tag);
-    	}
+        // Agregar nuevos tags globales como desactivados si el botón no los conocía
+        for (String tag : tagsGlobales) {
+            mapaTags.putIfAbsent(tag, false);
+        }
+    }
+    
+    public void borrarTagBoton(String tag) 
+    {
+    	mapaTags.remove(tag);
     }
 }

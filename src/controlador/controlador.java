@@ -30,13 +30,13 @@ public class controlador {
 		idBoton = 0;
 		this.vista = vista;
 		reproducirSonido = new reproductorSonido();
+		cargarTags();
 		setObserver(vista);
 		setearListenersVista();
 		setearListenerSave();
 		setearListenerLoad();
 		setearListenerImport();
 		cargarArchivosUltimaRuta();
-		cargarTags();
 	}
 	
 	private void setearListenersVista() 
