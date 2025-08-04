@@ -180,12 +180,18 @@ public class botonSonido {
 		return bordeBoton;
 	}
 	
-	public void setListaTagVentana(List<String> listaTags) 
-	{
+	public void setListaTagVentana(List<String> listaTags, List<String> tagsGlobales) {
 	    for (String tag : listaTags) {
-	        mapaTags.put(tag, true); // Si ya estaba → se reactiva. Si no, se agrega como true.
+	        mapaTags.put(tag, true); // Activa o agrega como true
+	    }
+
+	    for (String tagGlobal : tagsGlobales) {
+	        if (!listaTags.contains(tagGlobal)) {
+	            mapaTags.put(tagGlobal, false); // Desactiva si no está en listaTags
+	        }
 	    }
 	}
+
 	
 	// idea general: cargo los tags de los botones.
 	// si quedan en true significa que están en uso y son tagsGlobales

@@ -152,7 +152,7 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
     
     private void configurarCierreVentana() {
     	setOnCloseRequest(e ->{ 
-    		 botonAsociado.setListaTagVentana(new ArrayList<>(tagsSeleccionados));
+    		 botonAsociado.setListaTagVentana(new ArrayList<>(tagsSeleccionados),tagsDisponibles);
     		botonAsociado.setVentanaEdicion(null);
     	});
     }
@@ -399,7 +399,7 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	    // Al iniciar, refrescamos para mostrar los tags iniciales
 	    refrescarVisualizacionTags();
 	    
-	    botonAsociado.setListaTagVentana(tagsSeleccionados);
+	    botonAsociado.setListaTagVentana(tagsSeleccionados,tagsDisponibles);
 	    
 	    return new VBox(10, tituloSeleccionados, flowPaneTagsSeleccionados, tituloDisponibles, flowPaneTagsDisponibles);
 	}
