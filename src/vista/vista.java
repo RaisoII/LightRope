@@ -605,11 +605,15 @@ public void seleccionarImagenParaBoton(int idBoton) {
     private void agregarListenerBotonDerecho(botonSonido botonSonido) 
     {
     	Button boton = botonSonido.getBotonAsociado();
+    	System.out.println(botonSonido.getLoop());
     	  // Crear el menú contextual
-        ContextMenu menuContextual = crearMenuContextual.menuContextual(this,botonSonido.getIdBoton());
+        MenuContextual menuContextual = new MenuContextual(this,botonSonido.getLoop(),
+        																botonSonido.getIdBoton());
 
         // Configurar el evento de menú contextual
         boton.setOnContextMenuRequested((ContextMenuEvent e) -> {
+        	
+        	menuContextual.actualizarLoop(botonSonido.getLoop());
             botonActualSeleccionado = botonSonido;
             menuContextual.show(boton, e.getScreenX(), e.getScreenY());
         });
@@ -750,6 +754,15 @@ public void seleccionarImagenParaBoton(int idBoton) {
     {
     	botonSonido boton =  mapaBotonesSonido.get(idBoton);
     	boton.setFadeOut(fadeOut);
+    }
+    
+    public void setearLoopMenuContextual(int idBoton, boolean loop) 
+    {
+    	botonSonido boton = mapaBotonesSonido.get(idBoton);
+    	boton.setLoop(loop);
+    	ventanaEdicionSonido ventanaBoton = (ventanaEdicionSonido) boton.getVentanaEdicion();
+    	if(ventanaBoton != null)
+    		ventanaBoton.setLoopBox(loop);
     }
     
     public void setLoop(int idBoton,boolean loop) 

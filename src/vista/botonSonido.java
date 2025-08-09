@@ -211,7 +211,6 @@ public class botonSonido {
 	
 	public List<String> getTags() 
 	{
-	    
 	    return getListaTags();
 	}
 	

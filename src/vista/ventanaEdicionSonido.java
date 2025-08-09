@@ -483,4 +483,9 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	    // si se eliminó algún tag del paso 1.
 	    refrescarVisualizacionTags();
 	}
+	
+	public void setLoopBox(boolean loop) 
+	{
+		checkBoxLoop.setSelected(loop);
+	}
 }
