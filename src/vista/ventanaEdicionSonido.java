@@ -35,7 +35,7 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 
     private botonSonido botonAsociado;
     private controlador controlador;
-    private boolean usuarioMovioSlider,dragPermitido;
+    
     
     // parametros sonido
     private CheckBox checkBoxLoop;  
@@ -169,60 +169,17 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
         checkBoxLoop.setOnAction(e -> listenerLoop());
     }
     
-    private void crearSliderProgreso() {
+    private void crearSliderProgreso() { 
     	
-    	usuarioMovioSlider = false;
-    	dragPermitido = false;
-    	// Slider de progreso de la canción
-        sliderProgreso = new Slider(0, duracionSegundos, 0); // ahora el tope es la duración real
+    	sliderProgreso = new Slider(0, duracionSegundos, 0);
         sliderProgreso.setShowTickLabels(true);
         sliderProgreso.setShowTickMarks(true);
-
-        // Elegís un salto cómodo. Por ejemplo, cada 10 segundos:
         sliderProgreso.setMajorTickUnit(10);
-        sliderProgreso.setMinorTickCount(0); // o 1 si querés mini-marcas
-        sliderProgreso.setBlockIncrement(1);
+        sliderProgreso.setMinorTickCount(0);
         sliderProgreso.setPrefWidth(350);
-        sliderProgreso.setDisable(!botonAsociado.getBotonApretado()); // hasta que se reproduzca
-        
-        sliderProgreso.setOnMousePressed(e -> {
-            
-            controlador.deleteObserver(this);
-
-            double y = e.getY();
-            double height = sliderProgreso.getHeight();
-
-            // Solo permitimos drag si el clic fue dentro de la zona de la barra
-            dragPermitido = y > 4 && y < height - 26;
-        });
-       
-        sliderProgreso.setOnMouseReleased(e -> {
-        	
-        	//System.out.println(dragPermitido + " , "+usuarioMovioSlider);
-            if (dragPermitido || usuarioMovioSlider) {
-            	actualizarAudio();
-            }
-            
-            usuarioMovioSlider = false;
-        });
-        
-     // Este bloque detecta si el usuario hace clic sobre la bolita (thumb) directamente
-        Platform.runLater(() -> {
-            Node thumb = sliderProgreso.lookup(".thumb");
-                thumb.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
-                    usuarioMovioSlider = true;
-                    dragPermitido = true;
-                    //System.out.println("🎯 Clic directo sobre la bolita (lookup)");
-                });
-        });
+        sliderProgreso.setDisable(!botonAsociado.getBotonApretado());
         
         
-        sliderProgreso.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (dragPermitido && !oldVal.equals(newVal)) {
-                usuarioMovioSlider = true;
-            }
-        });
-       
         sliderProgreso.setLabelFormatter(new StringConverter<Double>() {
             @Override
             public String toString(Double valor) {
@@ -237,7 +194,65 @@ public class ventanaEdicionSonido extends Stage implements interfaceReproductorL
 	            return 0.0; // No se necesita convertir de vuelta, solo mostramos el formato
 	        }
         });
+        
+        // Método para detectar clicks en thumb, ticks o labels
+        EventHandler<MouseEvent> bloquearClicksTicks = e -> {
+            if (isClickEnThumbOTicks(e)) {
+                e.consume();
+            }
+        };
+
+        // Usamos filtros para interceptar el evento antes que el slider lo procese
+        sliderProgreso.addEventFilter(MouseEvent.MOUSE_PRESSED, bloquearClicksTicks);
+        sliderProgreso.addEventFilter(MouseEvent.MOUSE_RELEASED, bloquearClicksTicks);
+        sliderProgreso.addEventFilter(MouseEvent.MOUSE_CLICKED, bloquearClicksTicks);
+
+        // Opcional: bloquear clicks en la pista para evitar mover slider desde ahí
+        Node track = sliderProgreso.lookup(".track");
+        if (track != null) {
+            track.addEventFilter(MouseEvent.ANY, e -> e.consume());
+        }
+
+        // Tu lógica previa, adaptada
+        sliderProgreso.setOnMousePressed(e -> {
+            if (!isClickEnThumbOTicks(e)) {
+                controlador.deleteObserver(this);
+            }
+        });
+
+        sliderProgreso.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (sliderProgreso.isValueChanging()) {
+                controlador.deleteObserver(this);
+            }
+        });
+
+        sliderProgreso.setOnMouseReleased(e -> {
+            boolean fueArrastre = sliderProgreso.isValueChanging();
+
+            if (!fueArrastre)
+            {
+                double posicion = (e.getX() / sliderProgreso.getWidth()) * duracionSegundos;
+                sliderProgreso.setValue(posicion);
+            }
+
+            actualizarAudio();
+        });
     }
+
+    // El método mejorado para detectar clicks en thumb, tick, label o axis
+    private boolean isClickEnThumbOTicks(MouseEvent e) {
+        Node target = (Node) e.getTarget();
+
+        while (target != null) {
+            var styles = target.getStyleClass();
+            if (styles.contains("tick-mark") || styles.contains("tick-label") || styles.contains("axis")) {
+                return true;
+            }
+            target = target.getParent();
+        }
+        return false;
+    }
+
     
     private void crearSliderVolumen() {
     	 // Slider de volumen
