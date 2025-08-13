@@ -66,24 +66,22 @@ public class controlador {
 		    {
 		    	idBoton = 0;
 				vista.borrarTodosLosBotones();
-		    	crearBotonesCarga(ruta);
+		    	crearBotonesCarga(ruta,"",true);
 		    	config.setUltimaRutaXML(ruta);
 		    }
 		});
 	}
 	
 	private void setearListenerImport() 
-	{
-		ConfigManager config = new ConfigManager();
-		
+	{	
 		vista.agregarListenerMenuItemImport(e ->{
-			String ruta = vista.seleccionarArchivoXML(); // este método está en vista
+			String ruta = vista.seleccionarArchivoRope(); 
 		    if (ruta != null) 
 		    {
+		    	String rutaImagenes = vista.seleccionarRutaImagenesRope();
 		    	idBoton = 0;
 				vista.borrarTodosLosBotones();
-		    	crearBotonesCarga(ruta);
-		    	config.setUltimaRutaXML(ruta);
+		    	crearBotonesCarga(ruta,rutaImagenes,false);
 		    }
 		});
 	}
@@ -96,7 +94,7 @@ public class controlador {
 		if (ruta != null && new File(ruta).exists())
 		{
 			vista.borrarTodosLosBotones();
-			crearBotonesCarga(ruta);
+			crearBotonesCarga(ruta,"",true);
 		}
 	}
 	
@@ -113,9 +111,14 @@ public class controlador {
 		vista.setTagsGlobales(listaTags);
 	}
 	
-	private void crearBotonesCarga(String ruta) 
+	private void crearBotonesCarga(String ruta,String rutaImagenes, boolean isXML) 
 	{
-		List<datosSonidoLectura> datosCargados = XMLManager.loadXML(ruta);
+		List<datosSonidoLectura> datosCargados;
+		if(isXML)
+			datosCargados = XMLManager.loadXML(ruta);
+		else
+			datosCargados = XMLManager.loadSoftRope(ruta, rutaImagenes);
+	
         for (datosSonidoLectura datos : datosCargados) {
         	
         	final int idBotonEstatico = idBoton;

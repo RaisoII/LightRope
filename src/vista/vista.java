@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javafx.application.Platform;
@@ -23,6 +24,7 @@ import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -502,15 +504,46 @@ public class vista implements interfaceReproductorListener{
         }
     }
     
-    public String seleccionarArchivoXML() {
-	    FileChooser fileChooser = new FileChooser();
+    public String seleccionarArchivoXML()
+    {
+    	FileChooser fileChooser = new FileChooser();
 	    fileChooser.setTitle("Seleccionar archivo XML");
 	    fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos XML", "*.xml"));
 	    File archivo = fileChooser.showOpenDialog(null);
 	    return (archivo != null) ? archivo.getAbsolutePath() : null;
 	}
     
-    public String seleccionarRutaGuardado() {
+    public String seleccionarArchivoRope()
+    {
+    	FileChooser fileChooser = new FileChooser();
+	    fileChooser.setTitle("Seleccionar archivo softrope");
+	    fileChooser.getExtensionFilters().add (new FileChooser.ExtensionFilter
+	    										("Archivos SoftRope (*.softrope)", "*.softrope"));
+	    File archivo = fileChooser.showOpenDialog(null);
+	    return (archivo != null) ? archivo.getAbsolutePath() : null;
+	}
+    
+    public String seleccionarRutaImagenesRope() {
+        // Preguntar si quiere elegir carpeta
+        Alert alerta = new Alert(Alert.AlertType.CONFIRMATION);
+        alerta.setTitle("Carpeta de imágenes");
+        alerta.setHeaderText("¿Desea seleccionar una carpeta para guardar imágenes?");
+        alerta.setContentText("Si no selecciona, las imágenes no se guardarán.");
+
+        Optional<ButtonType> resultado = alerta.showAndWait();
+        if (resultado.isPresent() && resultado.get() == ButtonType.OK) {
+            DirectoryChooser dirChooser = new DirectoryChooser();
+            dirChooser.setTitle("Seleccionar carpeta para guardar imágenes");
+            File carpeta = dirChooser.showDialog(null);
+            return (carpeta != null) ? carpeta.getAbsolutePath() : "";
+        }
+
+        return ""; // No eligió carpeta
+    }
+
+    
+    public String seleccionarRutaGuardado()
+    {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Guardar como archivo XML");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivo XML", "*.xml"));

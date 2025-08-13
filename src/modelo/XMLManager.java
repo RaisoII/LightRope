@@ -1,6 +1,7 @@
 package modelo;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -13,9 +14,14 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import archivosSoloLectura.datosSonidoLectura;
 
@@ -144,4 +150,93 @@ public class XMLManager {
 
         return datosCargados;
     }
+	
+	public static List<datosSonidoLectura> loadSoftRope(String ruta, String rutaImagenes) {
+	    List<datosSonidoLectura> datosCargados = new ArrayList<>();
+
+	    try {
+	        File archivoXML = new File(ruta);
+	        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+	        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+	        Document doc = dBuilder.parse(archivoXML);
+	        doc.getDocumentElement().normalize();
+
+	        NodeList scenes = doc.getElementsByTagName("Scene");
+	        for (int i = 0; i < scenes.getLength(); i++) {
+	            Element scene = (Element) scenes.item(i);
+
+	            // SoundEffect
+	            Element soundEffect = (Element) scene.getElementsByTagName("SoundEffect").item(0);
+	            boolean isLooping = Boolean.parseBoolean(getTagValue("IsLooping", soundEffect));
+
+	            // Nombre directo hijo <Name> de Scene (no buscar recursivamente)
+	            String nombreBoton = getDirectChildValue("Name", scene);
+
+	            // Sample (siempre uno)
+	            Element sample = (Element) soundEffect.getElementsByTagName("Sample").item(0);
+	            String fileName = getTagValue("FileName", sample);
+	            Double volumen = Double.parseDouble(getTagValue("Volume", sample));
+
+	            // Imagen (opcional)
+	            String imagenBase64 = getTagValue("ButtonImage", scene);
+	            String rutaImagen = "";
+	            if (!rutaImagenes.isEmpty() && imagenBase64 != null && !imagenBase64.isBlank()) {
+	                rutaImagen =  guardarImagenBase64(imagenBase64, rutaImagenes, nombreBoton + ".png");
+	            }
+
+	            System.out.println(rutaImagen);
+
+	            // Crear objeto datosSonidoLectura (ajustá constructor y parámetros si es necesario)
+	            datosSonidoLectura datos = new datosSonidoLectura(fileName, nombreBoton, 0, volumen, 0, 0, 0, isLooping);
+	            
+	            if(rutaImagen != "")
+	            	datos.setRutaImagen(rutaImagen);
+	            
+	            datosCargados.add(datos);
+	        }
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    return datosCargados;
+	}
+
+	// Función para obtener solo hijos directos con cierto tag (no busca recursivamente)
+	private static String getDirectChildValue(String tag, Element parent) {
+	    NodeList children = parent.getChildNodes();
+	    for (int i = 0; i < children.getLength(); i++) {
+	        Node node = children.item(i);
+	        if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals(tag)) {
+	            return node.getTextContent();
+	        }
+	    }
+	    return "";
+	}
+
+	// Función que ya tenías para obtener tag recursivo
+	private static String getTagValue(String tag, Element element) {
+	    if (element == null) return "";
+	    NodeList nodeList = element.getElementsByTagName(tag);
+	    if (nodeList != null && nodeList.getLength() > 0) {
+	        Node node = nodeList.item(0);
+	        return node.getTextContent();
+	    }
+	    return "";
+	}
+
+	// Guardar imagen base64 a archivo
+	private static String guardarImagenBase64(String base64, String carpetaDestino, String nombreArchivo) {
+	    try {
+	        byte[] bytes = Base64.getDecoder().decode(base64);
+	        Path path = Paths.get(carpetaDestino, nombreArchivo);
+	        Files.write(path, bytes);
+	        return path.toUri().toString();
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    return "";
+	}
+
 }
