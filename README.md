@@ -1,4 +1,4 @@
-HARDROPE
+#LIGHTROPE
 # Botonera de Sonidos para Partidas de Rol
 
 Este proyecto, desarrollado en **Java**, simula el uso de una **botonera de sonidos** con efectos de sonido y música editables. 
