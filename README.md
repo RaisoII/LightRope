@@ -21,6 +21,5 @@ Este proyecto se encuentra en desarrollo. Acepta archivos .mp3 y WAV con ideas d
 
 # Descargar
 
-Si solo querés usar la aplicación sin compilar el código, podés descargar una versión lista para ejecutar desde la sección de Releases del repositorio.
+Si solo querés usar la aplicación sin compilar el código, podés descargar una versión lista para ejecutar desde la sección de Releases del repositorio descargando el archivo .rar
 
-Descargá el archivo .rar, descomprimilo y seguí las instrucciones del archivo README.txt incluido para ejecutar el programa.
